@@ -1,6 +1,6 @@
 {
-  "short_name": "子弹笔记",
-  "name": "子弹笔记应用",
+  "short_name": "React App",
+  "name": "Create React App Sample",
   "icons": [
     {
       "src": "favicon.ico",
