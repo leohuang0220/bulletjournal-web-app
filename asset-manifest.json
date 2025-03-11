@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/bulletjournal-web-app/static/css/main.a1e766c5.css",
+    "main.js": "/bulletjournal-web-app/static/js/main.4221d663.js",
+    "static/js/453.6c75322c.chunk.js": "/bulletjournal-web-app/static/js/453.6c75322c.chunk.js",
+    "service-worker.js": "/bulletjournal-web-app/service-worker.js",
+    "index.html": "/bulletjournal-web-app/index.html",
+    "main.a1e766c5.css.map": "/bulletjournal-web-app/static/css/main.a1e766c5.css.map",
+    "main.4221d663.js.map": "/bulletjournal-web-app/static/js/main.4221d663.js.map",
+    "453.6c75322c.chunk.js.map": "/bulletjournal-web-app/static/js/453.6c75322c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a1e766c5.css",
+    "static/js/main.4221d663.js"
+  ]
+}
