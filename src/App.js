@@ -97,7 +97,7 @@ function App() {
       } catch (err) {
         console.error('載入筆記時出錯:', err);
         if (retryCount < 3) {
-          setTimeout(() => {
+      setTimeout(() => {
             setRetryCount(prev => prev + 1);
           }, 1000);
         } else {
@@ -223,7 +223,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="App">
+    <div className="App">
         <div className="container">
           <h1>子彈筆記</h1>
           
@@ -306,52 +306,45 @@ function App() {
               <div className="empty-message">還沒有筆記，開始新增吧！</div>
             ) : (
               notes.map(note => (
-                <div key={note.id} className={`note-item ${note.status === TASK_STATUS.COMPLETED ? 'completed' : ''}`}>
-                  {note.type === NOTE_TYPES.TASK && (
-                    <select
-                      value={note.status}
-                      onChange={(e) => updateNoteStatus(note.id, e.target.value)}
-                      className="status-select"
-                    >
-                      <option value={TASK_STATUS.TODO}>• 待辦</option>
-                      <option value={TASK_STATUS.COMPLETED}>× 完成</option>
-                      <option value={TASK_STATUS.MIGRATED}>{'>'} 遷移</option>
-                      <option value={TASK_STATUS.SCHEDULED}>{'<'} 排程</option>
-                    </select>
-                  )}
-                  <span className="note-symbol">{getStatusSymbol(note.status)}</span>
-                  <span className="note-content">
-                    {note.content}
-                    {note.priority.important && <span className="priority-marker">*</span>}
-                    {note.priority.urgent && <span className="priority-marker">!</span>}
+                <div 
+                  key={note.id} 
+                  className={`note ${note.type} ${
+                    note.priority && (note.priority.important || note.priority.urgent) ? 'priority' : ''
+                  }`}
+                >
+                  <span className="note-status" onClick={() => {
+                    if (note.type === NOTE_TYPES.TASK) {
+                      const currentIndex = Object.values(TASK_STATUS).indexOf(note.status);
+                      const nextIndex = (currentIndex + 1) % Object.values(TASK_STATUS).length;
+                      updateNoteStatus(note.id, Object.values(TASK_STATUS)[nextIndex]);
+                    }
+                  }}>
+                    {note.type === NOTE_TYPES.TASK ? getStatusSymbol(note.status) : ''}
                   </span>
+                  <span className="note-content">{note.content}</span>
+                  {note.priority && (note.priority.important || note.priority.urgent) && (
+                    <span className="priority-indicator">
+                      {note.priority.important ? '!' : ''}{note.priority.urgent ? '⚡' : ''}
+                    </span>
+                  )}
+                  <button onClick={() => deleteNote(note.id)} className="delete-note">✕</button>
                   <div className="note-tags">
                     {tags.map(tag => (
-                      <label key={tag} className="tag-label">
-                        <input
-                          type="checkbox"
-                          checked={note.tags.includes(tag)}
-                          onChange={() => toggleNoteTag(note.id, tag)}
-                        />
-                        {tag}
-                      </label>
+                      <span
+                        key={tag}
+                        className={`tag ${note.tags.includes(tag) ? 'active' : ''}`}
+                        onClick={() => toggleNoteTag(note.id, tag)}
+                      >
+                        #{tag}
+                      </span>
                     ))}
                   </div>
-                  <span className="note-date">
-                    {new Date(note.createdAt).toLocaleDateString()}
-                  </span>
-                  <button 
-                    onClick={() => deleteNote(note.id)} 
-                    className="delete-button"
-                  >
-                    刪除
-                  </button>
                 </div>
               ))
             )}
           </div>
         </div>
-      </div>
+    </div>
     </ErrorBoundary>
   );
 }
