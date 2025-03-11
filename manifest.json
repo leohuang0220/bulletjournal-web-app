@@ -1,0 +1,52 @@
+{
+  "short_name": "子彈筆記",
+  "name": "子彈筆記應用",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/bulletjournal-web-app/",
+  "start_url": "/bulletjournal-web-app/",
+  "scope": "/bulletjournal-web-app/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "theme_color": "#4A90E2",
+  "background_color": "#ffffff",
+  "description": "一個簡單好用的子彈筆記應用",
+  "dir": "ltr",
+  "lang": "zh-TW",
+  "prefer_related_applications": false,
+  "categories": ["productivity", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "主頁面截圖"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新增筆記",
+      "url": "/bulletjournal-web-app/new",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
+}
