@@ -1,5 +1,5 @@
 // 離線快取：頁面與圖示先存起來，字型第一次連網後也會存
-const CACHE = 'mansiang-v1';
+const CACHE = 'mansiang-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

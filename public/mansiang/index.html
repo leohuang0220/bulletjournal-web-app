@@ -176,7 +176,6 @@ var STEPS=[
  {k:'buf',n:'留白',t:'預留空白，再回頭看一次',d:'每天都會有臨時狀況。留白讓行程有調整的餘地，最後用三個問題檢查一遍。'}
 ];
 var KIND={fixed:'固定行程',prep:'準備・交通',buffer:'留白',gap:'空檔小事'};
-var EXAMPLES=['上午十點開會','回覆家長訊息','確認活動場地','下午和店長討論人員安排','睡前讀半小時'];
 var GAPIDEAS=['讀十頁書','回覆兩則重要訊息','走十分鐘換氣','寫下三個要談的重點','看一次學生的學習紀錄'];
 var QS=[['q1','有沒有哪一段排得太趕？'],['q2','有沒有一件其實可以延後或交給別人處理？'],['q3','今天我有沒有留一點時間給自己和重要的人？']];
 
@@ -192,24 +191,6 @@ function dur(m){return m>=60?(Math.floor(m/60)+' 小時'+(m%60?' '+(m%60)+' 分'
 
 /* ---------- data ---------- */
 function emptyData(){return {v:1,dump:[],top:[],items:[],gapTasks:{},done:{},rv:{q1:'',q2:'',q3:''},sample:false}}
-function sampleData(){
-  var d=emptyData();
-  var names=['上午十點核心會議','回覆家長訊息','確認活動場地','看完今天要分享的資料','下午和店長討論人員安排','晚上陪孩子上課','睡前讀半小時'];
-  d.dump=names.map(function(t,i){return {id:'s'+i,text:t}});
-  d.top=['s0','s1','s5'];
-  d.items=[
-   {id:'a1',kind:'prep',start:'08:30',end:'09:00',text:'交通到公司'},
-   {id:'a2',kind:'prep',start:'09:15',end:'10:00',text:'會前整理資料'},
-   {id:'a3',kind:'fixed',start:'10:00',end:'12:00',text:'核心與潛在股東會議'},
-   {id:'a4',kind:'fixed',start:'12:00',end:'13:30',text:'跨部門協調會議'},
-   {id:'a5',kind:'fixed',start:'13:30',end:'14:30',text:'各分店店長、組長幹部會議'},
-   {id:'a6',kind:'fixed',start:'14:30',end:'15:30',text:'分區全體同仁會議'},
-   {id:'a7',kind:'buffer',start:'16:00',end:'16:30',text:'留給臨時狀況'}
-  ];
-  d.gapTasks={'09:00':'車上讀的書再讀十頁','15:30':'寫下明天要談的三個重點'};
-  d.sample=true;
-  return d;
-}
 function sorted(items){return items.slice().sort(function(a,b){return mins(a.start)-mins(b.start)||mins(a.end)-mins(b.end)})}
 function gapsOf(items){
   var s=sorted(items),out=[],reach=null;
@@ -254,9 +235,8 @@ async function loadDay(date){
   var d=remote||local;
   if(d){S.data=Object.assign(emptyData(),JSON.parse(JSON.stringify(d)));S.data.sample=false;setStatus(remote?'已儲存':'已存在這台裝置')}
   else{
-    var isToday=date===ymd(new Date());
-    S.data=isToday?sampleData():emptyData();
-    setStatus(isToday?'範例，尚未儲存':'尚無筆記');
+    S.data=emptyData();
+    setStatus('尚無筆記');
   }
   render();
 }
@@ -280,9 +260,9 @@ function head(i){var s=STEPS[i];return '<div><div class="stepno">第 '+(i+1)+' �
 
 function vDump(){
   var d=S.data,h=head(0)+bannerHtml();
-  h+='<form class="row-form" id="dumpForm"><input type="text" id="dumpIn" placeholder="例如：回覆家長訊息" autocomplete="off" aria-label="今天想到的事"><button class="btn" type="submit">加入</button></form>';
+  h+='<form class="row-form" id="dumpForm"><input type="text" id="dumpIn" placeholder="想到的事" autocomplete="off" aria-label="今天想到的事"><button class="btn" type="submit">加入</button></form>';
   if(!d.dump.length){
-    h+='<div class="label">點一下加入範例</div><div class="chips">'+EXAMPLES.map(function(t){return '<button class="chip" data-act="addDump" data-t="'+esc(t)+'">'+esc(t)+'</button>'}).join('')+'</div>';
+    h+='<p class="empty">還沒有事項。想到什麼就寫一件，按「加入」。</p>';
   }else{
     h+='<ul class="list">'+d.dump.map(function(x){return '<li class="item"><span class="txt">'+esc(x.text)+'</span><button class="del" data-act="delDump" data-id="'+x.id+'" aria-label="刪除：'+esc(x.text)+'">×</button></li>'}).join('')+'</ul>';
     h+='<p class="empty">共 '+d.dump.length+' 件。想完了，就到下一步圈出最重要的三件。</p>';
@@ -307,14 +287,21 @@ function withWarn(items){
   var reach=-1;
   return sorted(items).map(function(x){var o=Object.assign({},x);o.warn=reach>mins(x.start);reach=Math.max(reach,mins(x.end));return o});
 }
+function fillChips(){
+  var d=S.data,used={};
+  d.items.forEach(function(x){used[x.text]=1});
+  var left=d.dump.filter(function(x){return !used[x.text]});
+  if(!left.length)return '';
+  return '<div class="label">從第一步帶入</div><div class="chips">'+left.map(function(x){return '<button type="button" class="chip" data-act="fillText" data-t="'+esc(x.text)+'">'+esc(x.text)+'</button>'}).join('')+'</div>';
+}
 function vTime(){
   var d=S.data,h=head(2)+bannerHtml();
   h+='<form class="card" id="itemForm" style="display:flex;flex-direction:column;gap:10px">'+
     '<div class="seg" role="radiogroup" aria-label="類型">'+
     ['fixed','prep'].map(function(k,i){return '<label><input type="radio" name="kind" value="'+k+'"'+(i===0?' checked':'')+'><span>'+KIND[k]+'</span></label>'}).join('')+
     '<label><input type="radio" name="kind" value="buffer"><span>留白</span></label></div>'+
-    '<div class="times"><label for="tStart">開始<input type="time" id="tStart" required value="09:00"></label><label for="tEnd">結束<input type="time" id="tEnd" required value="10:00"></label></div>'+
-    '<input type="text" id="tText" placeholder="例如：跨部門協調會議" autocomplete="off" aria-label="行程內容" required>'+
+    '<div class="times"><label for="tStart">開始<input type="time" id="tStart" required></label><label for="tEnd">結束<input type="time" id="tEnd" required></label></div>'+
+    fillChips()+'<input type="text" id="tText" placeholder="行程內容" autocomplete="off" aria-label="行程內容" required>'+
     '<button class="btn" type="submit" style="width:100%">放進時間軸</button></form>';
   if(!d.items.length)return h+'<p class="empty">還沒有行程。填好時間與內容，按「放進時間軸」。</p>';
   h+='<div class="card"><ul class="tl">'+withWarn(d.items).map(function(x){return evRow(x,true)}).join('')+'</ul></div>';
@@ -340,7 +327,7 @@ function vBuf(){
   h+='<div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="stat"><span class="n">'+total+'</span><span class="lead">分鐘留白</span></div>'+
     (bs.length?'<ul class="tl">'+sorted(bs).map(function(x){return evRow(x,true)}).join('')+'</ul>':'<p class="empty">今天還沒有留白。臨時狀況來的時候，行程會沒有調整的餘地。</p>')+
     '<form id="bufForm" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">'+
-    '<label for="bStart" class="label">開始<input type="time" id="bStart" required value="16:00"></label>'+
+    '<label for="bStart" class="label">開始<input type="time" id="bStart" required></label>'+
     '<label for="bLen" class="label">長度<select id="bLen"><option value="15">15 分</option><option value="30" selected>30 分</option><option value="45">45 分</option><option value="60">60 分</option></select></label>'+
     '<button class="btn" type="submit">加留白</button></form></div>';
   h+='<h3 class="sec">最後，從頭看一次今天</h3>';
@@ -416,6 +403,7 @@ document.addEventListener('click',function(e){
   else if(a==='delItem'){var iid=el.getAttribute('data-id');d.items=d.items.filter(function(x){return x.id!==iid});touch();render()}
   else if(a==='gapIdea'){d.gapTasks[el.getAttribute('data-k')]=el.getAttribute('data-t');touch();render()}
   else if(a==='copy'){copyText(mapText())}
+  else if(a==='fillText'){var tt=$('tText');tt.value=el.getAttribute('data-t');var ts=$('tStart');if(ts&&!ts.value)ts.focus();}
 });
 $('prev').addEventListener('click',function(){shiftDay(-1)});
 $('next').addEventListener('click',function(){shiftDay(1)});
@@ -450,7 +438,7 @@ document.addEventListener('submit',function(e){
     var kind=f.querySelector('input[name=kind]:checked').value;
     var st=$('tStart').value,en=$('tEnd').value,tx=$('tText').value.trim();
     if(!st||!en||!tx)return;
-    if(mins(en)<=mins(st)){en=hm(Math.min(mins(st)+30,1439))}
+    if(mins(en)<=mins(st)){var w=$('tEnd');w.setCustomValidity('結束時間要晚於開始時間');w.reportValidity();w.addEventListener('input',function(){w.setCustomValidity('')},{once:true});return}
     d.items.push({id:uid6(),kind:kind,start:st,end:en,text:tx});touch();render();
   }else if(f.id==='bufForm'){
     var bs=$('bStart').value,len=+$('bLen').value;
@@ -471,6 +459,8 @@ function copyText(t){
   }catch(e){fallback()}
 }
 
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flush()});
+window.addEventListener('pagehide',flush);
 /* ---------- boot ---------- */
 render();
 loadDay(S.date);
