@@ -3,7 +3,7 @@
   "short_name": "果果日記",
   "description": "夫妻共享的寶寶照護記錄：餵奶、尿布、睡眠、成長曲線、相簿與 AI 建議。",
   "lang": "zh-Hant",
-  "id": "./",
+  "id": "/bulletjournal-web-app/guoguo/?app=guoguo-diary",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
