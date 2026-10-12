@@ -290,6 +290,52 @@ button{cursor:pointer;border:0;background:none}
 .mem:last-child{border-bottom:0}
 .mem span{min-width:0;overflow-wrap:anywhere}
 .mem button{color:var(--warn);font-size:13px;flex:none}
+
+/* ───── 平板：畫面加寬 ───── */
+@media (min-width:700px){
+  .app,.tray-in,.tabs-in{max-width:720px}
+  .sheet{max-width:640px}
+  .lasts{grid-template-columns:repeat(4,1fr)}
+  .alb{grid-template-columns:repeat(3,1fr)}
+  .ribbon svg{max-width:640px;margin:0 auto}
+}
+/* ───── 電腦：左側選單＋中間內容＋右側快速記錄 ───── */
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  .tabs{top:0;bottom:0;right:auto;width:220px;border-top:0;border-right:1px solid var(--line);padding:22px 14px}
+  .tabs::before{content:"果果日記";display:block;font-family:"Huninn",var(--f);font-size:22px;color:var(--primary-deep);padding:4px 14px 18px}
+  .tabs-in{max-width:none;display:flex;flex-direction:column;gap:4px}
+  .tab{height:50px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 16px;border-radius:14px;font-size:15.5px}
+  .tab:hover{background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+  .tab[aria-selected="true"]{background:var(--primary-soft);color:var(--primary-deep)}
+  .tab[aria-selected="true"] svg{transform:none}
+
+  .app,.app.notrack{max-width:none;margin:0 0 0 220px;padding:24px 344px 48px 36px}
+  .app.notrack{padding-right:36px}
+  .app>*{max-width:880px;margin-left:auto;margin-right:auto}
+  .hd{border-radius:26px;padding:18px 22px 20px}
+  .wrap{padding-inline:0}
+  .ribbon svg{max-width:680px;margin:0 auto}
+
+  .tray{left:auto;right:24px;top:24px;bottom:auto;width:296px}
+  .tray-in{max-width:none;padding:0}
+  .tray-card{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 4px;padding:16px 10px 14px;overflow:visible;box-shadow:var(--shadow)}
+  .tray-card::before{content:"快速記錄";grid-column:1/-1;font-family:"Huninn",var(--f);font-size:16px;padding:0 8px 2px;color:var(--ink)}
+  .qa{flex:none;font-size:12.5px}
+  .qa:hover .badge{transform:scale(1.07)}
+
+  .chips{grid-template-columns:repeat(8,1fr)}
+  .lasts{grid-template-columns:repeat(4,1fr)}
+  .alb{grid-template-columns:repeat(4,1fr)}
+
+  .scrim{align-items:center;padding:24px}
+  .sheet{max-width:640px;max-height:88vh;border-radius:26px;padding:12px 24px 24px}
+  .grab{display:none}
+}
+@media (min-width:1440px){
+  .app>*{max-width:960px}
+  .alb{grid-template-columns:repeat(5,1fr)}
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
