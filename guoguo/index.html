@@ -291,6 +291,32 @@ button{cursor:pointer;border:0;background:none}
 .mem span{min-width:0;overflow-wrap:anywhere}
 .mem button{color:var(--warn);font-size:13px;flex:none}
 
+
+/* 疫苗與健檢 */
+.carebn{width:100%;margin-top:14px;display:flex;align-items:center;gap:12px;text-align:left;background:color-mix(in srgb,var(--warn) 12%,var(--surface));border:1.5px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:var(--r);padding:12px 14px;color:var(--ink)}
+.carebn>svg{width:26px;height:26px;color:var(--warn);flex:none}
+.carebn>svg:last-child{width:18px;height:18px;color:var(--muted)}
+.carebn div{flex:1;min-width:0}.carebn b{display:block;font-weight:600;font-size:15px}.carebn small{color:var(--muted);font-size:12.5px}
+.dot{font-style:normal;display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;padding:0 5px;margin-left:2px}
+.notif{display:flex;align-items:center;gap:12px}
+.notif>svg{width:26px;height:26px;color:var(--primary);flex:none}
+.notif div{flex:1;min-width:0}.notif b{display:block;font-weight:600}.notif small{color:var(--muted);font-size:12.5px;line-height:1.5}
+.mini{background:var(--primary);color:#fff;border-radius:999px;padding:8px 16px;font-size:14px;flex:none}
+.addbtn.ghost{background:var(--surface);color:var(--primary-deep);border:1.5px solid var(--primary-soft);margin:4px 0 2px}
+.cl{list-style:none;margin:0;padding:0;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}
+.cr{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.cr:last-child{border-bottom:0}.cr:hover{background:color-mix(in srgb,var(--primary) 5%,var(--surface))}
+.cr.soon{background:color-mix(in srgb,var(--warn) 7%,var(--surface))}
+.cr .ck{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;flex:none;margin-top:2px}
+.cr .ck svg{width:18px;height:18px}
+.cr .ck[aria-pressed="true"]{background:var(--c-pee);border-color:var(--c-pee);color:#fff}
+.cr .body{flex:1;min-width:0}.cr b{display:block;font-weight:500;line-height:1.45}
+.cr small{display:block;font-size:12px;color:var(--muted);line-height:1.5}.cr small.warn{color:var(--warn);font-weight:600}
+.cr.done b{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+.kd{display:inline-block;font-size:10.5px;border-radius:999px;padding:1px 8px;margin-bottom:3px;background:color-mix(in srgb,var(--c) 18%,var(--surface));color:var(--ink)}
+.more{width:100%;padding:8px;color:var(--primary-deep);font-size:13.5px;margin:-4px 0 10px}
+.link{color:var(--primary-deep);font-size:13px;margin-top:6px;text-decoration:underline}
+.ckrow{display:flex;align-items:center;gap:8px;font-size:15px}.ckrow input{width:20px;height:20px;accent-color:var(--c-pee)}
 /* ───── 平板：畫面加寬 ───── */
 @media (min-width:700px){
   .app,.tray-in,.tabs-in{max-width:720px}
@@ -368,6 +394,8 @@ button{cursor:pointer;border:0;background:none}
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+    <symbol id="i-vax" viewBox="0 0 24 24"><path d="M17 3l4 4M19 5l-3 3M14.5 5.5l4 4M8 11l2 2M11 8l2 2M16.5 7.5l-9 9-3.5 1 1-3.5 9-9M4.5 19.5L3 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16zM10 20.5a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
   </defs>
@@ -471,7 +499,7 @@ let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   fb = firebase.initializeApp(window.FIREBASE_CONFIG);
@@ -513,6 +541,7 @@ function attachFamily(ref){
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
+  subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   subs.push(db.collection('moments').orderBy('t','desc').limit(500).onSnapshot(snap=>{S.moments=snap.docs.map(d=>({id:d.id,...d.data()}));if(!document.querySelector('.scrim'))render()},fsErr));
@@ -747,7 +776,7 @@ function viewLog(){
     `<div class="empty">${ic('baby')}這一天還沒有記錄<br>點下方圖示，時間會自動帶入現在</div>`;
   return header(nav)+`<div class="wrap">
     ${S.readOnly?'<div class="ro">你目前只能查看。請另一半在分享選單把你設為「編輯者」才能一起記錄。</div>':''}
-    ${sinceCard}<div class="chips">${chips}</div>${ribbon(list)}
+    ${isToday?careBanner():''}${sinceCard}<div class="chips">${chips}</div>${ribbon(list)}
     <div class="sect"><h2>時間軸</h2><span>${items.length} 筆</span></div>${tl}</div>`;
 }
 function itemRow(l){
@@ -853,9 +882,11 @@ function niceStep(m){const raw=m/4, p=Math.pow(10,Math.floor(Math.log10(raw)));c
 
 /* ───────── view: growth ───────── */
 function viewGrow(){
+  const cv=`<div class="seg" role="group" aria-label="成長分頁"><button data-cv="curve" aria-pressed="${S.careView!=='care'}">成長曲線</button><button data-cv="care" aria-pressed="${S.careView==='care'}">疫苗與健檢${careDue().length?` <i class="dot">${careDue().length}</i>`:''}</button></div>`;
+  if(S.careView==='care') return header(`<div class="datenav"><span></span><div class="d">疫苗與健檢<small>依生日自動排程・可自行修改</small></div><span></span></div>`)+`<div class="wrap">${cv}${viewCare()}</div>`;
   const W=who()[S.gMode];
   return header(`<div class="datenav"><span></span><div class="d">成長曲線<small>參考 WHO ${S.baby.sex==='男'?'男童':'女童'} 0–12 個月</small></div><span></span></div>`)+
-  `<div class="wrap"><div class="seg" role="group"><button data-g="w" aria-pressed="${S.gMode==='w'}">體重</button><button data-g="h" aria-pressed="${S.gMode==='h'}">身長</button><button data-g="hc" aria-pressed="${S.gMode==='hc'}">頭圍</button></div>
+  `<div class="wrap">${cv}<div class="seg" role="group"><button data-g="w" aria-pressed="${S.gMode==='w'}">體重</button><button data-g="h" aria-pressed="${S.gMode==='h'}">身長</button><button data-g="hc" aria-pressed="${S.gMode==='hc'}">頭圍</button></div>
   ${growChart()}
   <p class="hint">粉色帶為第 3–97 百分位，虛線為中位數（近似值）。曲線僅供參考，判讀請以兒童健康手冊與醫師評估為準。</p>
   ${!S.baby.birth?'<p class="hint warn">請先到「設定」填寫生日，才能把量測點放到正確月齡。</p>':''}
@@ -912,6 +943,7 @@ function viewSet(){
    <div class="card"><label class="lbl" for="s-iv">餵奶間隔提醒（小時，0 = 不顯示）</label><input class="field" id="s-iv" type="number" inputmode="decimal" min="0" max="8" step="0.5" value="${S.baby.interval??3}"><p class="hint">首頁會顯示「預計下次餵奶」時間，超過時標成紅色。</p></div>
    <button class="addbtn" data-act="saveset">${ic('check')}儲存設定</button>
    ${familyCard()}
+   ${Object.values(S.care.ov||{}).some(o=>o.hide)?`<div class="card"><span class="lbl">疫苗與健檢</span><p class="hint" style="margin:0 0 8px">有 ${Object.values(S.care.ov).filter(o=>o.hide).length} 個預設項目被隱藏。</p><button class="mini" data-act="cunhide">恢復隱藏項目</button></div>`:''}
    <div class="sect"><h2>使用說明</h2></div>
    <div class="btnline"><button class="btn2" data-act="reob">重新看功能介紹與基本資料設定</button>${fsOk()?`<button class="btn2" data-act="fs">${document.fullscreenElement?'離開全螢幕':'全螢幕模式'}</button>`:''}</div>
    <div class="sect"><h2>AI 設定</h2></div>
@@ -1141,6 +1173,163 @@ document.addEventListener('click',e=>{
   else if(b.dataset.ob==='next'){ if(!obValid()) return; if(ob.i>=OB_STEPS.length-1){obFinish(false)} else {ob.i++;drawOb();document.getElementById('ob').scrollTop=0} }
 });
 
+/* ───────── 疫苗與健檢提醒 ───────── */
+// 依 疾管署「現行兒童預防接種時程」(114年1月版) 與 國健署「兒童預防保健服務 7+2 新制」(115年7月1日起)
+const CARE_DEF=[
+  {id:'nb-heart',k:'chk',d:1,  t:'新生兒先天性心臟病篩檢（血氧）',w:'出生後 24–36 小時',n:'多數醫院出院前完成，自費或部分縣市補助。'},
+  {id:'nb-meta', k:'chk',d:2,  t:'新生兒先天代謝異常篩檢（腳跟採血）',w:'出生滿 48 小時後',n:'出院前完成；如需複檢，醫院會通知。'},
+  {id:'nb-ear',  k:'chk',d:3,  t:'新生兒聽力篩檢',w:'出生後 3 個月內（多在出院前）',n:'公費；未通過請依醫院安排複篩。'},
+  {id:'v0', k:'vax',d:0,  t:'B型肝炎 第1劑',w:'出生 24 小時內',n:'媽媽為 B 肝 e 抗原陽性時，寶寶還要加打 B 肝免疫球蛋白（HBIG）。'},
+  {id:'v1', k:'vax',m:1,  t:'B型肝炎 第2劑',w:'出生滿 1 個月'},
+  {id:'c1', k:'chk',m:1,  t:'兒童預防保健 第1次',w:'出生後 2 週至 2 個月',n:'生長、髖關節、心雜音、眼睛紅反射、聽力反應等。可和疫苗同一天看。'},
+  {id:'v2', k:'vax',m:2,  t:'五合一 第1劑、13價肺炎鏈球菌 第1劑',w:'出生滿 2 個月',n:'自費輪狀病毒疫苗第1劑通常也在這時（預計 116 年起改公費）。'},
+  {id:'c2', k:'chk',m:2,  t:'兒童預防保健 第2次',w:'2 至 4 個月',n:'抬頭、對人微笑、眼神追視、發咕咕聲。'},
+  {id:'v4', k:'vax',m:4,  t:'五合一 第2劑、13價肺炎鏈球菌 第2劑',w:'出生滿 4 個月',n:'自費輪狀病毒疫苗第2劑通常也在這時。'},
+  {id:'c3', k:'chk',m:4,  t:'兒童預防保健 第3次',w:'4 至 6 個月',n:'副食品添加、頸部支撐、手掌張開、發笑聲。'},
+  {id:'v5', k:'vax',m:5,  t:'卡介苗（BCG）',w:'出生滿 5 個月（建議 5–8 個月）'},
+  {id:'v6', k:'vax',m:6,  t:'B型肝炎 第3劑、五合一 第3劑',w:'出生滿 6 個月',n:'滿 6 個月起可打公費流感疫苗（流感季，第一次要打 2 劑、間隔 4 週）。三劑型輪狀病毒第3劑也在這時。'},
+  {id:'c4', k:'chk',m:9,  t:'兒童預防保健 第4次',w:'6 個月至 1 歲',n:'翻身、坐穩、爬、扶站、喚名反應、副食品。'},
+  {id:'v12',k:'vax',m:12, t:'麻疹腮腺炎德國麻疹(MMR) 第1劑、水痘、13價肺炎鏈球菌 第3劑',w:'出生滿 12 個月（肺鏈 12–15 個月）'},
+  {id:'c5', k:'chk',m:12, t:'兒童預防保健 第5次',w:'1 歲至 1 歲半',n:'放手走、說單字、潔牙、螢幕時間。'},
+  {id:'v15',k:'vax',m:15, t:'日本腦炎 第1劑',w:'出生滿 15 個月'},
+  {id:'v18',k:'vax',m:18, t:'五合一 第4劑',w:'出生滿 18 個月',n:'A 型肝炎第1劑：特定山地鄉、離島等地區公費，其他地區可自費。'},
+  {id:'c6', k:'chk',m:18, t:'兒童預防保健 第6次',w:'1 歲半至 2 歲',n:'遮蓋測試初篩眼位、扶欄上樓、使用湯匙。'},
+  {id:'v27',k:'vax',m:27, t:'日本腦炎 第2劑',w:'出生滿 27 個月（與第1劑間隔 12 個月）',n:'A 型肝炎第2劑也在這時（公費地區或自費）。'},
+  {id:'c7', k:'chk',m:27, t:'兒童預防保健 第7次',w:'2 至 3 歲',n:'雙腳跳、疊積木、說片語。'},
+  {id:'c8', k:'chk',m:36, t:'兒童預防保健 第8次',w:'3 至 5 歲',n:'視力（立體圖）、BMI、會跳、自行上廁所。'},
+  {id:'v60',k:'vax',m:60, t:'MMR 第2劑、白喉破傷風百日咳小兒麻痺(Tdap-IPV)',w:'滿 5 歲至入國小前'},
+  {id:'c9', k:'chk',m:60, t:'兒童預防保健 第9次',w:'5 歲至未滿 7 歲',n:'視力、第二性徵、注意力與活動量。'},
+  ...[12,18,24,30,36,42,48,54,60,66].map((m,i)=>({id:'fl'+m,k:'den',m,t:`牙齒塗氟 第${i+1}次`,w:'未滿 6 歲每半年 1 次（牙醫診所）',n:'第一顆牙長出後就可以開始。'})),
+];
+const CARE_KIND={vax:{n:'疫苗',c:'--c-med',i:'vax'},chk:{n:'健檢',c:'--c-mood',i:'baby'},den:{n:'牙齒',c:'--c-pee',i:'baby'},own:{n:'自訂',c:'--c-sleep',i:'bell'}};
+S.care={ov:{},own:{}}; S.careView='curve'; S.careAll=false;
+function ymd(t){const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function addM(b,m){const d=new Date(b+'T00:00');const day=d.getDate();d.setMonth(d.getMonth()+m);if(d.getDate()<day)d.setDate(0);return ymd(d)}
+function dayDiff(a,b){return Math.round((new Date(a+'T00:00')-new Date(b+'T00:00'))/DAY)}
+function careItems(){
+  const out=[], b=S.baby.birth, ov=S.care.ov||{};
+  if(b) for(const x of CARE_DEF){ const o=ov[x.id]||{}; if(o.hide) continue;
+    const auto=x.m!=null?addM(b,x.m):ymd(new Date(b+'T00:00').getTime()+(x.d||0)*DAY);
+    out.push({...x,auto,date:o.date||auto,remind:o.remind??3,done:!!o.done,doneAt:o.doneAt||'',memo:o.memo||'',moved:!!o.date&&o.date!==auto}) }
+  for(const [id,o] of Object.entries(S.care.own||{})) out.push({id,k:'own',t:o.t||'自訂提醒',w:'',n:'',date:o.date,remind:o.remind??3,done:!!o.done,doneAt:o.doneAt||'',memo:o.memo||'',own:true});
+  return out.filter(x=>x.date).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+}
+function careDue(){ // 今天要提醒的（提前 N 天到當天，未完成）＋已過期未完成
+  const today=ymd(Date.now());
+  return careItems().filter(x=>!x.done).map(x=>({...x,left:dayDiff(x.date,today)})).filter(x=>x.left<=x.remind && x.left>=-14);
+}
+function leftTxt(n){return n>1?`還有 ${n} 天`:n===1?'明天':n===0?'今天':`已過 ${-n} 天`}
+async function saveCare(){
+  if(S.mode==='db'){ try{ await db.doc('meta/care').set(S.care) }catch(e){writeErr(e)} } else ls('bl_care',S.care);
+  syncReminderCache(); render();
+}
+function careBanner(){
+  const due=careDue(); if(!due.length) return '';
+  return `<button class="carebn" data-act="gocare">${ic('bell')}<div><b>${due.length===1?esc(due[0].t):`有 ${due.length} 個疫苗／健檢要注意`}</b><small>${due.slice(0,3).map(x=>`${esc(x.t.split('、')[0].replace(/（.*$/,''))} ${leftTxt(x.left)}`).join('・')}</small></div>${ic('right')}</button>`;
+}
+function careRow(x,today){
+  const K=CARE_KIND[x.k], left=dayDiff(x.date,today), soon=!x.done&&left<=x.remind&&left>=-14;
+  return `<li class="cr${x.done?' done':''}${soon?' soon':''}" data-act="cedit" data-id="${x.id}">
+    <button class="ck" data-act="cdone" data-id="${x.id}" aria-pressed="${x.done}" aria-label="${x.done?'取消完成':'標記完成'}">${ic('check')}</button>
+    <div class="body"><span class="kd" style="--c:var(${K.c})">${K.n}</span><b>${esc(x.t)}</b>
+      <small class="num">${x.date.replace(/-/g,'/')}${x.moved?'（已改期）':''}${x.w?'・'+esc(x.w):''}</small>
+      ${x.done?`<small>✓ 已完成${x.doneAt?' '+x.doneAt.replace(/-/g,'/'):''}</small>`:`<small class="${soon?'warn':''}">${leftTxt(left)}・提前 ${x.remind} 天提醒</small>`}</div></li>`;
+}
+function viewCare(){
+  const today=ymd(Date.now()), all=careItems();
+  const past=all.filter(x=>x.date<today&&!x.done), done=all.filter(x=>x.done), up=all.filter(x=>x.date>=today&&!x.done);
+  const shown=S.careAll?up:up.slice(0,8);
+  const perm=('Notification' in window)?Notification.permission:'unsupported';
+  return `${!S.baby.birth?'<p class="hint warn">請先到「設定」填寫生日，才能排出疫苗和健檢日期。</p>':''}
+  <div class="card notif">${ic('bell')}<div><b>每日提醒</b><small>${perm==='granted'?'已開啟：在日期前幾天，每天打開 App 或背景時會跳通知。':perm==='denied'?'通知被封鎖了，請到手機設定 → 應用程式 → 果果日記（或 Chrome）→ 通知，開啟後再回來。':perm==='unsupported'?'這個瀏覽器不支援通知，建議加入手機行事曆。':'開啟後，日期前幾天每天跳通知。'}</small></div>
+   ${perm==='default'?`<button class="mini" data-act="nperm">開啟</button>`:''}</div>
+  <button class="addbtn ghost" data-act="cics">${ic('bell')}全部加入手機行事曆（最穩定的提醒）</button>
+  ${past.length?`<div class="sect"><h2>過了日期、還沒打勾</h2><span>打過就點左邊圓圈</span></div><ul class="cl">${past.map(x=>careRow(x,today)).join('')}</ul>`:''}
+  <div class="sect"><h2>接下來</h2><span>${up.length} 項</span></div>
+  ${up.length?`<ul class="cl">${shown.map(x=>careRow(x,today)).join('')}</ul>${up.length>8?`<button class="more" data-act="callt">${S.careAll?'收起':'顯示全部 '+up.length+' 項'}</button>`:''}`:'<div class="empty">目前沒有待辦的疫苗或健檢</div>'}
+  <button class="addbtn" data-act="cadd">${ic('plus')}新增自訂提醒</button>
+  ${done.length?`<div class="sect"><h2>已完成</h2><span>${done.length} 項</span></div><ul class="cl">${done.slice().reverse().map(x=>careRow(x,today)).join('')}</ul>`:''}
+  <p class="hint">時程依衛福部疾管署「現行兒童預防接種時程」與國健署「兒童預防保健服務」（115 年 7 月起 9 次）整理，日期依生日自動推算；實際接種請以兒童健康手冊與醫師建議為準。點任何一項可以改日期、提醒天數或寫備註。</p>`;
+}
+let ccur=null;
+function openCare(id){
+  const x=id?careItems().find(i=>i.id===id):null;
+  ccur=x?{...x}:{id:'own_'+Date.now().toString(36),k:'own',own:true,t:'',date:ymd(Date.now()+7*DAY),remind:3,done:false,memo:'',isNew:true};
+  drawCare();
+}
+function drawCare(confirming){
+  const x=ccur, K=CARE_KIND[x.k];
+  document.getElementById('modal').innerHTML=`<div class="scrim" data-act="cclose"><div class="sheet" role="dialog" aria-modal="true" aria-label="提醒">
+   <div class="grab"></div><div class="sh-hd"><span class="badge" style="--c:var(${K.c})">${ic(K.i)}</span><h3>${x.isNew?'新增提醒':K.n+'提醒'}</h3><button class="x" data-act="cclose" aria-label="關閉">${ic('x')}</button></div>
+   <div class="card">${x.own?`<label class="lbl" for="c-t">項目名稱</label><input class="field" id="c-t" maxlength="40" value="${esc(x.t)}" placeholder="例如：自費輪狀病毒、回診、黃疸複檢">`:`<b style="font-size:16px">${esc(x.t)}</b>${x.w?`<p class="hint">建議時間：${esc(x.w)}</p>`:''}${x.n?`<p class="hint">${esc(x.n)}</p>`:''}`}</div>
+   <div class="card"><label class="lbl" for="c-d">預約日期</label><input class="field num" id="c-d" type="date" value="${x.date}">
+     ${!x.own&&x.moved?`<button class="link" data-act="creset">改回建議日期 ${x.auto.replace(/-/g,'/')}</button>`:''}
+     <span class="lbl" style="margin-top:12px">提前幾天開始每天提醒</span>
+     <div class="pills">${[0,1,2,3,5,7,14].map(n=>`<button class="pill" data-crem="${n}" aria-pressed="${x.remind===n}">${n===0?'當天':n+' 天'}</button>`).join('')}</div></div>
+   <div class="card"><label class="ckrow"><input type="checkbox" id="c-done" ${x.done?'checked':''}> 已完成</label>
+     <label class="lbl" for="c-at" style="margin-top:10px">完成日期</label><input class="field num" id="c-at" type="date" value="${x.doneAt||''}">
+     <label class="lbl" for="c-memo" style="margin-top:10px">備註（診所、批號、反應…）</label><textarea class="field" id="c-memo" rows="2" maxlength="300">${esc(x.memo||'')}</textarea></div>
+   ${S.readOnly?'':`<button class="save" data-act="csave">${ic('check')}儲存</button>`+(x.isNew?'':confirming?`<div class="confirm"><button data-act="ccancel">取消</button><button class="yes" data-act="cdodel">${x.own?'確定刪除':'確定隱藏這一項'}</button></div>`:`<button class="del" data-act="cask">${x.own?'刪除這個提醒':'不需要這一項（隱藏）'}</button>`)}
+  </div></div>`;
+}
+function syncCare(){ if(!ccur) return; const t=grab('c-t'); if(ccur.own) ccur.t=t.trim(); ccur.date=grab('c-d')||ccur.date; ccur.done=document.getElementById('c-done')?.checked||false; ccur.doneAt=grab('c-at'); ccur.memo=grab('c-memo') }
+async function careSave(){
+  syncCare(); const x=ccur; if(x.own&&!x.t){toast('請填項目名稱');return}
+  if(x.done&&!x.doneAt) x.doneAt=ymd(Date.now());
+  const rec={date:x.date,remind:x.remind,done:x.done,doneAt:x.done?x.doneAt:'',memo:x.memo};
+  if(x.own){ S.care.own={...(S.care.own||{}),[x.id]:{t:x.t,...rec}} }
+  else { const o={...rec}; if(x.date===x.auto) delete o.date; S.care.ov={...(S.care.ov||{}),[x.id]:o} }
+  ccur=null; document.getElementById('modal').innerHTML=''; await saveCare(); toast('已儲存');
+}
+async function careToggle(id){
+  const x=careItems().find(i=>i.id===id); if(!x||S.readOnly) return;
+  const done=!x.done, doneAt=done?ymd(Date.now()):'';
+  if(x.own) S.care.own[id]={...S.care.own[id],done,doneAt};
+  else S.care.ov={...(S.care.ov||{}),[id]:{...(S.care.ov||{})[id],done,doneAt}};
+  await saveCare(); if(done) toast('已完成 ✓');
+}
+async function careDel(){
+  const x=ccur; if(x.own){const o={...S.care.own};delete o[x.id];S.care.own=o} else S.care.ov={...(S.care.ov||{}),[x.id]:{...(S.care.ov||{})[x.id],hide:true}};
+  ccur=null; document.getElementById('modal').innerHTML=''; await saveCare(); toast(x.own?'已刪除':'已隱藏，可在「設定」恢復');
+}
+/* 通知：打開 App 時檢查＋背景定期檢查（Android Chrome 已安裝的 App） */
+function remPayload(){ return careItems().filter(x=>!x.done).map(x=>({id:x.id,t:x.t,date:x.date,remind:x.remind})) }
+async function syncReminderCache(){
+  try{ const c=await caches.open('guoguo-rem'); await c.put('./__rem.json',new Response(JSON.stringify({name:S.baby.name||'寶寶',items:remPayload()}),{headers:{'Content-Type':'application/json'}})) }catch(e){}
+}
+async function notifyDue(){
+  if(!('Notification' in window)||Notification.permission!=='granted'||!S.baby.birth) return;
+  const today=ymd(Date.now()), due=careDue().filter(x=>x.left>=0); if(!due.length) return;
+  let log={}; try{ const c=await caches.open('guoguo-rem'); const r=await c.match('./__remlog.json'); if(r) log=await r.json() }catch(e){}
+  const reg=await navigator.serviceWorker?.ready.catch(()=>null);
+  for(const x of due){ const k=x.id+'@'+x.date; if(log[k]===today) continue;
+    const title=`${S.baby.name||'寶寶'}・${x.left===0?'今天':x.left===1?'明天':x.left+' 天後'}：${x.t}`, body=`預約日期 ${x.date.replace(/-/g,'/')}，打開果果日記查看或標記完成。`;
+    try{ if(reg) await reg.showNotification(title,{body,tag:k,icon:'icons/b-icon-192.png',badge:'icons/b-icon-192.png',data:{url:'./index.html#care'}}); else new Notification(title,{body,tag:k,icon:'icons/b-icon-192.png'}); log[k]=today }catch(e){}
+  }
+  try{ const c=await caches.open('guoguo-rem'); await c.put('./__remlog.json',new Response(JSON.stringify(log))) }catch(e){}
+}
+async function enableNotify(){
+  if(!('Notification' in window)){toast('這個瀏覽器不支援通知');return}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){ await syncReminderCache();
+    try{ const reg=await navigator.serviceWorker.ready; if(reg.periodicSync){ const st=await navigator.permissions.query({name:'periodic-background-sync'}).catch(()=>({state:'granted'})); if(st.state==='granted') await reg.periodicSync.register('gg-remind',{minInterval:6*3600*1000}) } }catch(e){}
+    toast('通知已開啟'); notifyDue() } else toast('沒有開啟通知');
+  render();
+}
+function exportIcs(){
+  const today=ymd(Date.now()), items=careItems().filter(x=>!x.done&&x.date>=today);
+  if(!items.length){toast('沒有待辦項目');return}
+  const nm=S.baby.name||'寶寶', st=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
+  const escI=s=>String(s).replace(/[\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+  const ev=items.map(x=>{const d=x.date.replace(/-/g,''); const al=[];for(let i=x.remind;i>=0;i--) al.push(`BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:${escI(nm+'：'+x.t)}\r\nTRIGGER:${i===0?'PT0M':'-P'+i+'D'}\r\nEND:VALARM`);
+    return `BEGIN:VEVENT\r\nUID:${x.id}-${d}@guoguo-diary\r\nDTSTAMP:${st}\r\nDTSTART;TZID=Asia/Taipei:${d}T090000\r\nDTEND;TZID=Asia/Taipei:${d}T100000\r\nSUMMARY:${escI(nm+'｜'+x.t)}\r\nDESCRIPTION:${escI((x.w?'建議時間：'+x.w+'\n':'')+(x.n||'')+(x.memo?'\n備註：'+x.memo:''))}\r\n${al.join('\r\n')}\r\nEND:VEVENT`}).join('\r\n');
+  const ics=`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//guoguo-diary//ZH\r\nCALSCALE:GREGORIAN\r\nBEGIN:VTIMEZONE\r\nTZID:Asia/Taipei\r\nBEGIN:STANDARD\r\nDTSTART:19700101T000000\r\nTZOFFSETFROM:+0800\r\nTZOFFSETTO:+0800\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n${ev}\r\nEND:VCALENDAR\r\n`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'})); a.download=`${nm}-疫苗健檢.ics`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+  toast('已下載，點開檔案選「日曆」匯入');
+}
+setInterval(()=>{ if(S.babyLoaded||S.mode==='local') notifyDue() },30*60*1000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) notifyDue() });
+
 /* ───────── tray ───────── */
 function renderTray(){
   const tray=document.getElementById('tray');
@@ -1311,12 +1500,28 @@ document.addEventListener('click',async e=>{
   const tg=e.target.closest('[data-tag]'); if(tg&&cur){const tags=new Set(cur.rec.tags||[]);tags.has(tg.dataset.tag)?tags.delete(tg.dataset.tag):tags.add(tg.dataset.tag);cur.rec.tags=[...tags];tg.setAttribute('aria-pressed',tags.has(tg.dataset.tag));return}
   const fd=e.target.closest('[data-food]'); if(fd){document.getElementById('f-food').value=fd.dataset.food;return}
   const ss=e.target.closest('[data-sset]'); if(ss){S.baby[ss.dataset.sset]=ss.dataset.v;document.querySelectorAll(`[data-sset="${ss.dataset.sset}"]`).forEach(b=>b.setAttribute('aria-pressed',b===ss));return}
+  const cvb=e.target.closest('[data-cv]'); if(cvb){S.careView=cvb.dataset.cv;render();return}
+  const crm=e.target.closest('[data-crem]'); if(crm&&ccur){syncCare();ccur.remind=+crm.dataset.crem;drawCare();return}
   const af=e.target.closest('[data-af]'); if(af){S.albumFilter=af.dataset.af;render();return}
   const msb=e.target.closest('[data-ms]'); if(msb&&mcur){syncMoment();const on=!(mcur.ms&&mcur.title===msb.dataset.ms);mcur.ms=on;mcur.title=on?msb.dataset.ms:'';drawMoment();return}
   const a=e.target.closest('[data-act]'); if(!a) return;
   const act=a.dataset.act;
-  if((act==='close'||act==='gclose'||act==='mclose') && e.target!==a && a.classList.contains('scrim')) return;
+  if((act==='close'||act==='gclose'||act==='mclose'||act==='cclose') && e.target!==a && a.classList.contains('scrim')) return;
   switch(act){
+    case 'gocare': S.tab='grow'; S.careView='care'; render(); window.scrollTo(0,0); break;
+    case 'cedit': openCare(a.dataset.id); break;
+    case 'cdone': e.stopPropagation(); await careToggle(a.dataset.id); break;
+    case 'cadd': if(S.readOnly){toast('你目前只能查看');break} openCare(); break;
+    case 'cclose': ccur=null; document.getElementById('modal').innerHTML=''; break;
+    case 'creset': syncCare(); ccur.date=ccur.auto; drawCare(); break;
+    case 'csave': await careSave(); break;
+    case 'cask': syncCare(); drawCare(true); break;
+    case 'ccancel': drawCare(false); break;
+    case 'cdodel': await careDel(); break;
+    case 'callt': S.careAll=!S.careAll; render(); break;
+    case 'nperm': await enableNotify(); break;
+    case 'cics': exportIcs(); break;
+    case 'cunhide': { const ov={...(S.care.ov||{})}; for(const k in ov) if(ov[k].hide){const o={...ov[k]};delete o.hide;ov[k]=o} S.care.ov=ov; await saveCare(); toast('已恢復所有隱藏項目'); break }
     case 'dprev': S.day-=DAY; render(); break;
     case 'dnext': S.day=Math.min(S.day+DAY,startOfDay(Date.now())); render(); break;
     case 'wprev': S.wk-=7*DAY; render(); break;
@@ -1373,8 +1578,9 @@ async function exportCsv(){
   const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=`${S.baby.name||'寶寶'}-育兒記錄-${toInput(Date.now()).slice(0,10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.scrim')){if(mcur){closeMoment();return}document.getElementById('modal').innerHTML='';cur=null;render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.scrim')){ccur=null;if(mcur){closeMoment();return}document.getElementById('modal').innerHTML='';cur=null;render()}});
 
+if(location.hash==='#care'){S.tab='grow';S.careView='care'}
 render();
 initStore();
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
