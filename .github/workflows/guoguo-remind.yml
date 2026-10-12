@@ -1,0 +1,40 @@
+name: 果果日記每日提醒
+on:
+  schedule:
+    - cron: '50 0 * * *'   # 台灣時間每天 08:50（GitHub 可能延遲幾分鐘到一小時）
+  workflow_dispatch:
+    inputs:
+      test:
+        description: '測試模式：沒有到期項目也寄一封測試通知'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+  actions: write
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: scripts/guoguo-remind
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: node remind.mjs
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
+      # GitHub 會在 60 天沒更新時自動停用排程，這一步讓它保持開啟
+      - name: 保持排程開啟
+        if: always()
+        working-directory: .
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/guoguo-remind.yml/enable" || true
+        env:
+          GH_TOKEN: ${{ github.token }}

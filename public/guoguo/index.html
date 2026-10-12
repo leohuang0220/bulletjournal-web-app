@@ -541,6 +541,7 @@ function attachFamily(ref){
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
+  subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
@@ -1243,6 +1244,7 @@ function viewCare(){
   return `${!S.baby.birth?'<p class="hint warn">請先到「設定」填寫生日，才能排出疫苗和健檢日期。</p>':''}
   <div class="card notif">${ic('bell')}<div><b>每日提醒</b><small>${perm==='granted'?'已開啟：在日期前幾天，每天打開 App 或背景時會跳通知。':perm==='denied'?'通知被封鎖了，請到手機設定 → 應用程式 → 果果日記（或 Chrome）→ 通知，開啟後再回來。':perm==='unsupported'?'這個瀏覽器不支援通知，建議加入手機行事曆。':'開啟後，日期前幾天每天跳通知。'}</small></div>
    ${perm==='default'?`<button class="mini" data-act="nperm">開啟</button>`:''}</div>
+  ${S.mode==='db'?`<div class="card notif">${ic('bell')}<div><b>LINE＋Email 雲端提醒</b><small>${S.remind&&S.remind.lastRun?`每天早上自動檢查，不用開 App。上次檢查：${new Date(S.remind.lastRun).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}${S.remind.lastSent?'・已寄出提醒':'・當天沒有到期項目'}`:'設定完成後，每天早上自動寄 Email、推 LINE，不用開 App。'}</small></div></div>`:''}
   <button class="addbtn ghost" data-act="cics">${ic('bell')}全部加入手機行事曆（最穩定的提醒）</button>
   ${past.length?`<div class="sect"><h2>過了日期、還沒打勾</h2><span>打過就點左邊圓圈</span></div><ul class="cl">${past.map(x=>careRow(x,today)).join('')}</ul>`:''}
   <div class="sect"><h2>接下來</h2><span>${up.length} 項</span></div>
@@ -1294,7 +1296,10 @@ async function careDel(){
 }
 /* 通知：打開 App 時檢查＋背景定期檢查（Android Chrome 已安裝的 App） */
 function remPayload(){ return careItems().filter(x=>!x.done).map(x=>({id:x.id,t:x.t,date:x.date,remind:x.remind})) }
+let _remSent='';
 async function syncReminderCache(){
+  if(S.mode==='db'&&S.baby.birth&&!S.readOnly){ const pl={name:S.baby.name||'寶寶',items:remPayload()}, j=JSON.stringify(pl);
+    if(j!==_remSent&&j!==JSON.stringify({name:(S.remind||{}).name,items:(S.remind||{}).items})){ _remSent=j; db.doc('meta/remind').set({...pl,updated:Date.now()},{merge:true}).catch(()=>{_remSent=''}) } }
   try{ const c=await caches.open('guoguo-rem'); await c.put('./__rem.json',new Response(JSON.stringify({name:S.baby.name||'寶寶',items:remPayload()}),{headers:{'Content-Type':'application/json'}})) }catch(e){}
 }
 async function notifyDue(){
