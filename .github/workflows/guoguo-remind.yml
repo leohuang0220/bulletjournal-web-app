@@ -8,6 +8,10 @@ on:
         description: '測試模式：沒有到期項目也寄一封測試通知'
         type: boolean
         default: true
+      month_report:
+        description: '順便寄上個月花費月報（平常只在每月 1 號寄）'
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: write
@@ -31,6 +35,7 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
+          MONTH_REPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.month_report }}
       # GitHub 會在 60 天沒更新時自動停用排程，這一步讓它保持開啟
       - name: 保持排程開啟
         if: always()

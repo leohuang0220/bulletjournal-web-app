@@ -35,6 +35,26 @@ async function sendMail(to, subject, text) {
   return 'ok';
 }
 
+// 每月 1 號附上個月花費月報（families/{fid}/expenses）
+const CATS = { milk: '奶粉餵養', diaper: '尿布濕巾', cloth: '衣物鞋襪', bath: '洗沐保養', food: '副食品', med: '醫療保健', gear: '大型用品', toy: '玩具書籍', care: '托育保母', event: '紀念慶祝', other: '其他' };
+const money = n => '$' + Math.round(+n || 0).toLocaleString('en-US');
+function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); const d = new Date(Date.UTC(y, m - 2, 1)); return d.toISOString().slice(0, 7); }
+async function monthReport(famRef, name) {
+  const ym = prevMonth(twToday().slice(0, 7)), pym = prevMonth(ym);
+  const get = async m => (await famRef.collection('expenses').where('d', '>=', m + '-01').where('d', '<=', m + '-31').get()).docs.map(d => d.data());
+  const list = await get(ym), cnt = list.filter(e => !e.gift && +e.amt > 0);
+  if (!list.length) return null;
+  const tot = cnt.reduce((s, e) => s + +e.amt, 0), prev = (await get(pym)).filter(e => !e.gift && +e.amt > 0).reduce((s, e) => s + +e.amt, 0);
+  const by = {}; cnt.forEach(e => { by[e.cat || 'other'] = (by[e.cat || 'other'] || 0) + +e.amt; });
+  const meta = (await famRef.collection('meta').doc('money').get()).data() || {}, bud = +meta.budget || 0;
+  const label = `${+ym.slice(5)}月`, gifts = list.filter(e => e.gift).length;
+  const rows = Object.keys(by).sort((a, b) => by[b] - by[a]).map(k => `・${CATS[k] || '其他'} ${money(by[k])}（${Math.round(by[k] / tot * 100)}%）`);
+  const text = `📊 ${name} ${label}花費月報\n共 ${money(tot)}・${cnt.length} 筆` + (prev ? `（上個月 ${money(prev)}，${tot >= prev ? '多' : '少'} ${money(Math.abs(tot - prev))}）` : '') +
+    (bud ? `\n預算 ${money(bud)}，${tot > bud ? '超出 ' + money(tot - bud) : '省下 ' + money(bud - tot)}` : '') + (rows.length ? '\n\n' + rows.join('\n') : '') +
+    (gifts ? `\n🎁 收到禮物 ${gifts} 件` : '') + `\n\n圖表與 AI 分析：${APP_URL.replace('#care', '#money')}`;
+  return { label, text };
+}
+
 const today = twToday();
 const fams = await db.collection('families').get();
 let lineParts = [];
@@ -46,12 +66,16 @@ for (const f of fams.docs) {
   const due = items.map(x => ({ ...x, left: diff(x.date, today) }))
     .filter(x => (x.left >= 0 && x.left <= (x.remind ?? 3)) || (x.left < 0 && x.left >= -3))
     .sort((a, b) => a.left - b.left);
-  if (!due.length && !TEST) { console.log(f.id, '今天沒有要提醒的'); await rs.ref.set({ lastRun: Date.now(), lastSent: '' }, { merge: true }); continue; }
+  const report = (today.slice(8) === '01' || env.MONTH_REPORT === 'true') ? await monthReport(f.ref, name) : null;
+  if (!due.length && !report && !TEST) { console.log(f.id, '今天沒有要提醒的'); await rs.ref.set({ lastRun: Date.now(), lastSent: '' }, { merge: true }); continue; }
   const lines = due.map(x => `・${when(x.left)}（${slash(x.date)}）${x.t}${x.left < 0 ? '　→ 打過記得在 App 打勾' : ''}`);
-  const body = due.length
-    ? `${name} 的疫苗／健檢提醒（${slash(today)}）\n\n${lines.join('\n')}\n\n打開果果日記查看或標記完成：\n${APP_URL}`
-    : `【測試】果果日記雲端提醒設定成功！\n之後有要提醒的項目，每天早上會自動通知。\n${APP_URL}`;
-  const subject = due.length ? `【果果日記】${name}・${when(due[0].left)}：${due[0].t}${due.length > 1 ? ` 等 ${due.length} 項` : ''}` : '【果果日記】雲端提醒測試';
+  const parts = [];
+  if (due.length) parts.push(`${name} 的疫苗／健檢提醒（${slash(today)}）\n\n${lines.join('\n')}\n\n打開果果日記查看或標記完成：\n${APP_URL}`);
+  if (report) parts.push(report.text);
+  if (!parts.length) parts.push(`【測試】果果日記雲端提醒設定成功！\n之後有要提醒的項目，每天早上會自動通知。\n${APP_URL}`);
+  const body = parts.join('\n\n────────\n\n');
+  const subject = due.length ? `【果果日記】${name}・${when(due[0].left)}：${due[0].t}${due.length > 1 ? ` 等 ${due.length} 項` : ''}${report ? '＋花費月報' : ''}`
+    : report ? `【果果日記】${name} ${report.label}花費月報` : '【果果日記】雲端提醒測試';
   const to = (fam.emails || []).filter(Boolean);
   let mail = 'fail';
   try { mail = await sendMail(to, subject, body); } catch (e) { console.error('Email 失敗', e.message); }
