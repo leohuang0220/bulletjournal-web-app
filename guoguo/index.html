@@ -909,6 +909,18 @@ function aiPayload(){
     gestationWeeks:S.baby.ga,birthKg:S.baby.bw,birthCm:S.baby.bl,feeding:S.baby.feedMode||'未填',parentNotes:S.baby.note||''},
     last7days:days, growth, previousAnalysis:prev?{date:dateShort(prev.t),watch:prev.r?.watch,track:prev.r?.track}:null};
 }
+function lsGet(k){try{return localStorage.getItem(k)}catch(_){return null}}
+async function pickGeminiModel(key, bad){
+  try{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key)); const j=await r.json();
+    const ok=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/',''))
+      .filter(n=>/flash/.test(n)&&!/(lite|image|tts|live|audio|thinking|exp|embedding|8b)/.test(n)&&n!==bad);
+    if(ok.includes('gemini-flash-latest')) return 'gemini-flash-latest';
+    const ver=n=>{const m=n.match(/gemini-(\d+(?:\.\d+)?)/);return m?parseFloat(m[1]):0};
+    ok.sort((a,b)=>ver(b)-ver(a) || (/preview/.test(a)-/preview/.test(b)) || a.length-b.length);
+    return ok[0]||null;
+  }catch(e){return null}
+}
 async function runAI(){
   const key=(S.fam&&S.fam.geminiKey)||ls('bl_gemini')||'';
   if(!key){toast('請先到「設定」貼上 Gemini API 金鑰');S.tab='set';render();return}
@@ -926,9 +938,17 @@ async function runAI(){
 資料：
 ${JSON.stringify(aiPayload())}`;
   try{
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+(S.fam&&S.fam.geminiModel||'gemini-2.5-flash')+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.4}})});
-    const j=await res.json(); if(!res.ok) throw {code:res.status===429?'rate_limited':'api',message:j.error&&j.error.message};
+    const body=JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.4}});
+    const call=m=>fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body});
+    let model=(S.fam&&S.fam.geminiModel)||lsGet('gg_model')||'gemini-flash-latest';
+    let res=await call(model), j=await res.json();
+    if(!res.ok && res.status!==429){
+      // 模型被下架或名稱不對：向 Google 查目前可用的 Flash 模型，自動換新再試一次
+      const alt=await pickGeminiModel(key, model);
+      if(alt && alt!==model){ model=alt; res=await call(model); j=await res.json(); }
+    }
+    if(!res.ok) throw {code:res.status===429?'rate_limited':'api',message:j.error&&j.error.message};
+    try{localStorage.setItem('gg_model',model)}catch(_){}
     const txt=(j.candidates&&j.candidates[0]&&j.candidates[0].content.parts.map(p=>p.text||'').join(''))||'';
     const r=JSON.parse(txt.replace(/^```json|```$/g,'').trim());
     if(!r||typeof r!=='object'||!r.summary) throw {code:'bad'};
