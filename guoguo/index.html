@@ -203,7 +203,7 @@ button{cursor:pointer;border:0;background:none}
 .btnline{display:flex;gap:8px;flex-wrap:wrap}
 .btn2{border-radius:999px;padding:10px 16px;background:var(--surface);border:1.5px solid var(--line);font-size:14px}
 .note{font-size:12.5px;color:var(--muted);line-height:1.7}
-.tabs-in{grid-template-columns:repeat(5,1fr)}
+.tabs-in{grid-template-columns:repeat(6,1fr)}
 /* what's next + last cards */
 .next{margin-top:14px;background:var(--surface);border-radius:var(--r);padding:12px 14px 10px;box-shadow:var(--shadow)}
 .next h3{margin:0 0 8px;font-family:"Huninn",var(--f);font-weight:400;font-size:15px;color:var(--primary-deep);display:flex;justify-content:space-between;align-items:baseline}
@@ -317,6 +317,48 @@ button{cursor:pointer;border:0;background:none}
 .more{width:100%;padding:8px;color:var(--primary-deep);font-size:13.5px;margin:-4px 0 10px}
 .link{color:var(--primary-deep);font-size:13px;margin-top:6px;text-decoration:underline}
 .ckrow{display:flex;align-items:center;gap:8px;font-size:15px}.ckrow input{width:20px;height:20px;accent-color:var(--c-pee)}
+/* 花費 */
+.mb{width:34px;height:34px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;flex:none;font-family:"Huninn",var(--f);font-size:16px;line-height:1}
+.mb.big{width:34px;height:34px}
+.mhead{margin-top:14px;box-shadow:var(--shadow)}
+.mtot{display:flex;align-items:flex-start;gap:10px}
+.mtot>div{flex:1;min-width:0}
+.mtot small{font-size:12.5px;color:var(--muted)}
+.mtot b{display:block;font-size:32px;font-weight:600;color:var(--primary-deep);line-height:1.2}
+.mtot .sub{font-size:12.5px;color:var(--muted)}
+.mtot .mini{background:var(--primary-soft);color:var(--primary-deep);padding:8px;border-radius:50%;display:grid;place-items:center}
+.mtot .mini svg{width:18px;height:18px}
+.bud{margin-top:10px}
+.bud-bar{height:10px;border-radius:9px;background:var(--line);position:relative;overflow:visible}
+.bud-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px}
+.bud-bar em{position:absolute;top:-3px;width:2px;height:16px;background:var(--ink);opacity:.45}
+.bud small{display:block;font-size:12.5px;color:var(--muted);margin-top:6px}
+.mact{display:flex;gap:8px}
+.mact .addbtn{flex:1;font-size:14.5px}
+.addbtn.ghost2{background:var(--surface);color:var(--primary-deep);border:1.5px solid var(--primary-soft);cursor:pointer}
+.donut{display:flex;gap:12px;align-items:center;box-shadow:var(--shadow)}
+.donut svg{width:132px;height:132px;flex:none}
+.donut text{font-family:var(--f)}
+.mcl{list-style:none;margin:0;padding:0;flex:1;min-width:0}
+.mcl button{display:flex;align-items:center;gap:8px;width:100%;padding:5px 0;text-align:left}
+.mcl .mb{width:24px;height:24px;font-size:12px}
+.mcl .nm{flex:1;min-width:0;font-size:13.5px}
+.bar2{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:3px;overflow:hidden}
+.bar2 i{display:block;height:100%;border-radius:4px}
+.mcl .v{font-size:13.5px;font-weight:600;text-align:right;min-width:64px}
+.mcl .v small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+.tl .amt{font-weight:600;color:var(--ink);flex:none;text-align:right;font-size:15px}
+.tl .amt small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+.tl .amt.gift{color:var(--c-med);font-size:13px}
+.mpills{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.mpills::-webkit-scrollbar{display:none}
+.mpills .pill{flex:none;font-size:13px;padding:6px 12px}
+.field.big{font-size:24px;font-weight:600}
+.field:disabled{opacity:.4}
+.scrow{padding:10px 12px}
+.scrow input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--primary)}
+select.field{appearance:auto;padding:9px 8px}
+.code{font-size:26px;font-weight:600;letter-spacing:2px;text-align:center;background:var(--primary-soft);color:var(--primary-deep);border-radius:14px;padding:12px;margin:8px 0 0;user-select:all}
 /* ───── 平板：畫面加寬 ───── */
 @media (min-width:700px){
   .app,.tray-in,.tabs-in{max-width:720px}
@@ -397,6 +439,7 @@ button{cursor:pointer;border:0;background:none}
     <symbol id="i-vax" viewBox="0 0 24 24"><path d="M17 3l4 4M19 5l-3 3M14.5 5.5l4 4M8 11l2 2M11 8l2 2M16.5 7.5l-9 9-3.5 1 1-3.5 9-9M4.5 19.5L3 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16zM10 20.5a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="7.5" ry="3"/><path d="M4.5 7v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V7"/><path d="M4.5 12v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5"/></g></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
@@ -499,7 +542,7 @@ let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   fb = firebase.initializeApp(window.FIREBASE_CONFIG);
@@ -546,6 +589,7 @@ function attachFamily(ref){
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   subs.push(db.collection('moments').orderBy('t','desc').limit(500).onSnapshot(snap=>{S.moments=snap.docs.map(d=>({id:d.id,...d.data()}));if(!document.querySelector('.scrim'))render()},fsErr));
+  moneyAttach();
   assetsCap={
     async upload(blob){ const d=await blobToData(blob); const r=famRef.collection('photos').doc(); await r.set({d,t:Date.now()}); PHOTOS[r.id]=d; return {id:r.id} },
     async delete(id){ await famRef.collection('photos').doc(id).delete(); delete PHOTOS[id] }
@@ -721,10 +765,11 @@ function render(){
   else if(S.tab==='sum') app.innerHTML=viewSum();
   else if(S.tab==='grow') app.innerHTML=viewGrow();
   else if(S.tab==='album') app.innerHTML=viewAlbum();
+  else if(S.tab==='money') app.innerHTML=viewMoney();
   else app.innerHTML=viewSet();
 }
 function renderTabs(){
-  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['album','相簿','album'],['set','設定','gear']];
+  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['money','花費','coin'],['album','相簿','album'],['set','設定','gear']];
   document.getElementById('tabs').innerHTML=t.map(([k,n,i])=>`<button class="tab" role="tab" aria-selected="${S.tab===k}" data-tab="${k}">${ic(i)}${n}</button>`).join('');
 }
 function header(sub){
@@ -794,7 +839,7 @@ function itemRow(l){
   if(l.type==='solid'){v=[l.food,l.qty].filter(Boolean).join(' '); if(l.react&&l.react!=='沒有異常'){flag=l.react}}
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
   if(l.note) meta.push(esc(l.note));
-  const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0]));
+  const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0])); else if(l.via) meta.push(esc(l.via));
   const outOfDay = l.t<S.day;
   return `<li data-act="edit" data-id="${l.id}" style="--c:${cvar(l.type)}"><span class="tm num">${outOfDay?'昨':hm(l.t)}</span>${badge(l.type)}
     <div class="body"><b>${T.n}</b><span class="val num">${esc(v)}</span>${flag?`<span class="flag">${flag}</span>`:''}${meta.length?`<span class="meta">${meta.join(' · ')}</span>`:''}</div>${extra}</li>`;
@@ -944,6 +989,7 @@ function viewSet(){
    <div class="card"><label class="lbl" for="s-iv">餵奶間隔提醒（小時，0 = 不顯示）</label><input class="field" id="s-iv" type="number" inputmode="decimal" min="0" max="8" step="0.5" value="${S.baby.interval??3}"><p class="hint">首頁會顯示「預計下次餵奶」時間，超過時標成紅色。</p></div>
    <button class="addbtn" data-act="saveset">${ic('check')}儲存設定</button>
    ${familyCard()}
+   ${lineCard()}
    ${Object.values(S.care.ov||{}).some(o=>o.hide)?`<div class="card"><span class="lbl">疫苗與健檢</span><p class="hint" style="margin:0 0 8px">有 ${Object.values(S.care.ov).filter(o=>o.hide).length} 個預設項目被隱藏。</p><button class="mini" data-act="cunhide">恢復隱藏項目</button></div>`:''}
    <div class="sect"><h2>使用說明</h2></div>
    <div class="btnline"><button class="btn2" data-act="reob">重新看功能介紹與基本資料設定</button>${fsOk()?`<button class="btn2" data-act="fs">${document.fullscreenElement?'離開全螢幕':'全螢幕模式'}</button>`:''}</div>
@@ -953,7 +999,7 @@ function viewSet(){
      <button class="btn2" data-act="savekey" style="margin-top:8px">儲存金鑰</button></div>
    <div class="sect"><h2>匯出</h2></div>
    <div class="btnline"><button class="btn2" data-act="export">匯出近 30 天記錄（CSV）</button></div>
-   <p class="hint">可用 Excel 或 Google 試算表開啟，回診時給醫師看。</p></div>`;
+   <p class="hint">可用 Excel 或 Google 試算表開啟，回診時給醫師看。花費可到「花費 → 明細」匯出。</p></div>`;
 }
 
 /* ───────── AI helper ───────── */
@@ -1586,9 +1632,10 @@ async function exportCsv(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.scrim')){ccur=null;if(mcur){closeMoment();return}document.getElementById('modal').innerHTML='';cur=null;render()}});
 
 if(location.hash==='#care'){S.tab='grow';S.careView='care'}
-render();
-initStore();
+if(location.hash==='#money'){S.tab='money'}
+window.addEventListener('DOMContentLoaded',()=>{render();initStore()});
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
+<script src="money.js"></script>
 </body>
 </html>
