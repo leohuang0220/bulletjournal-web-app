@@ -1,3 +1,8 @@
-// Firebase 網頁設定：在 Firebase 主控台「專案設定 → 你的應用程式」複製後貼進來。
-// 這組設定不是密碼，可以放在公開網站；資料由 Firestore 規則保護。
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDspsWxoiQnFv8foqXG3s2oQ1rl6LGXVOk",
+  authDomain: "guoguo-diary.firebaseapp.com",
+  projectId: "guoguo-diary",
+  storageBucket: "guoguo-diary.firebasestorage.app",
+  messagingSenderId: "395223932798",
+  appId: "1:395223932798:web:b9c6ca2c219c5c6fe15d2f"
+};
