@@ -548,11 +548,28 @@ async function delMoment(m){
 const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 function photoSrc(p){if(p.startsWith('data:'))return p; if(PHOTOS[p])return PHOTOS[p]; loadPhoto(p); return BLANK}
 async function shrink(file){
-  const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(file)});
-  const max=1280, s=Math.min(1,max/Math.max(img.width,img.height));
-  const cv=document.createElement('canvas');cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);
-  cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); URL.revokeObjectURL(img.src);
-  return new Promise(r=>cv.toBlob(b=>r(b),'image/jpeg',.78));
+  const max=1280; let src=null, w=0, h=0, url=null;
+  // 先用瀏覽器內建縮小解碼（大像素手機照片不會爆記憶體），失敗再退回 <img>
+  try{
+    const probe=await createImageBitmap(file); w=probe.width; h=probe.height; probe.close&&probe.close();
+    const s=Math.min(1,max/Math.max(w,h));
+    src=await createImageBitmap(file,{resizeWidth:Math.max(1,Math.round(w*s)),resizeHeight:Math.max(1,Math.round(h*s)),resizeQuality:'high'});
+  }catch(e){
+    url=URL.createObjectURL(file);
+    src=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=url});
+  }
+  const iw=src.width||src.naturalWidth, ih=src.height||src.naturalHeight, s=Math.min(1,max/Math.max(iw,ih));
+  const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(iw*s));cv.height=Math.max(1,Math.round(ih*s));
+  cv.getContext('2d').drawImage(src,0,0,cv.width,cv.height); if(url)URL.revokeObjectURL(url); src.close&&src.close();
+  // 雲端每張照片要小於 1MB（base64 後），太大就降畫質／尺寸重壓
+  let q=.78, blob=null;
+  for(let k=0;k<6;k++){
+    blob=await new Promise(r=>cv.toBlob(b=>r(b),'image/jpeg',q));
+    if(!blob) throw new Error('encode');
+    if(blob.size<650000) return blob;
+    if(q>.5) q-=.12; else { const c2=document.createElement('canvas');c2.width=Math.round(cv.width*.8);c2.height=Math.round(cv.height*.8);c2.getContext('2d').drawImage(cv,0,0,c2.width,c2.height);cv.width=c2.width;cv.height=c2.height;cv.getContext('2d').drawImage(c2,0,0) }
+  }
+  return blob;
 }
 
 /* ───────── what's next ───────── */
@@ -956,7 +973,7 @@ async function uploadPhotos(e){
       const blob=await shrink(files[i]);
       if(S.mode==='local'){ mcur.photos.push(await blobToData(blob)) }
       else { const up=await assetsCap.upload(blob,{type:'image/jpeg'}); mcur.photos.push(up.id); (mcur._fresh=mcur._fresh||[]).push(up.id) }
-    }catch(err){ toast(err&&err.code==='quota_or_state'?'相簿空間已滿':'有一張照片上傳失敗'); }
+    }catch(err){ console.error(err); const c=err&&(err.code||err.message)||''; toast(c==='quota_or_state'?'相簿空間已滿':c==='decode'?'這張照片格式手機讀不出來，請換一張或先截圖再上傳':/permission/i.test(c)?'沒有上傳權限，請重新登入':/unavailable|network|offline/i.test(c)?'網路不穩，請稍後再試':'有一張照片上傳失敗（'+String(c).slice(0,40)+'）'); }
   }
   drawMoment();
 }
