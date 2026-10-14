@@ -236,6 +236,7 @@ button{cursor:pointer;border:0;background:none}
 .picks{display:flex;gap:8px;flex-wrap:wrap}
 .thumb{width:84px;height:84px;border-radius:12px;overflow:hidden;position:relative;background:var(--band)}
 .thumb img{width:100%;height:100%;object-fit:cover}
+.lthumb{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;margin-left:8px;background:var(--band)}
 .thumb button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center}
 .thumb button svg{width:14px;height:14px}
 .addph{width:84px;height:84px;border-radius:12px;border:2px dashed var(--line);display:grid;place-items:center;color:var(--primary);cursor:pointer}
@@ -851,6 +852,7 @@ function itemRow(l){
   if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
   if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title].filter(Boolean).join('・')}
+  if(l.photos&&l.photos.length){ extra+=`<img class="lthumb" src="${photoSrc(l.photos[0])}" data-pid="${l.photos[0]}" alt="" loading="lazy">`; if(l.photos.length>1) meta.push(l.photos.length+'張照片') }
   if(l.note) meta.push(esc(l.note));
   const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0])); else if(l.via) meta.push(esc(l.via));
   const outOfDay = l.t<S.day;
@@ -1506,12 +1508,12 @@ function drawSheet(confirming){
     const tags=rec.tags||[];
     body+=`<div class="card"><span class="lbl">哪裡不舒服（可複選）</span><div class="pills">${SICK_TAG.map(m=>`<button class="pill" style="--c:var(--c-sick)" data-tag="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
       <span class="lbl" style="margin-top:12px">嚴重程度</span><div class="pills">${SICK_SEV.map(a=>`<button class="pill" style="--c:var(--c-sick)" data-pick="sev" data-v="${a}" aria-pressed="${rec.sev===a}">${a}</button>`).join('')}</div>
-      <p class="hint warn">以下情況請立即就醫：未滿 3 個月發燒 ≥38°C、呼吸急促或胸口凹陷、嘔吐物帶綠色或血、持續高燒、精神很差叫不醒、尿量明顯變少、灰白便。</p></div>`+timeField('f-t','開始時間',rec.t);
+      <p class="hint warn">以下情況請立即就醫：未滿 3 個月發燒 ≥38°C、呼吸急促或胸口凹陷、嘔吐物帶綠色或血、持續高燒、精神很差叫不醒、尿量明顯變少、灰白便。</p></div>`+logPhotoBlock(rec)+timeField('f-t','開始時間',rec.t);
   }
   if(type==='event'){
     const tags=rec.what||[];
     body+=`<div class="card"><span class="lbl">發生了什麼（可複選）</span><div class="pills">${EVENT_TAG.map(m=>`<button class="pill" style="--c:var(--c-event)" data-what="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
-      <label class="lbl" for="f-title" style="margin-top:12px">簡短標題（選填）</label><input class="field" id="f-title" maxlength="40" value="${esc(rec.title||'')}" placeholder="例如：小兒科回診、第一次出門"></div>`+timeField('f-t','時間',rec.t);
+      <label class="lbl" for="f-title" style="margin-top:12px">簡短標題（選填）</label><input class="field" id="f-title" maxlength="40" value="${esc(rec.title||'')}" placeholder="例如：小兒科回診、第一次出門"></div>`+logPhotoBlock(rec)+timeField('f-t','時間',rec.t);
   }
   if(type==='med'){
     body+=`<div class="card"><label class="lbl" for="f-drug">藥名／保健品</label><input class="field" id="f-drug" value="${esc(rec.drug||'')}" placeholder="例如：維生素D滴劑" maxlength="40">
@@ -1526,6 +1528,27 @@ function drawSheet(confirming){
     <div class="grab"></div><div class="sh-hd">${badge(type)}<h3>${T.n}</h3><button class="x" data-act="close" aria-label="關閉">${ic('x')}</button></div>${body}${foot}</div></div>`;
 }
 function p_warn(k){return k==='pale'?'灰白／淡黃便可能是膽道閉鎖的警訊，請盡快帶寶寶就醫並帶著大便照片。':k==='black'?'出生頭幾天的胎便是黑綠色屬正常；之後若仍為黑色，請諮詢醫師。':'便便帶血請拍照並諮詢醫師。'}
+function logPhotoBlock(rec){
+  const ph=rec.photos||[], canUp=S.mode==='local'||!!assetsCap;
+  return `<div class="card"><span class="lbl">照片（選填）</span><div class="picks">${ph.map((p,i)=>`<div class="thumb"><img src="${photoSrc(p)}" data-pid="${p}" alt=""><button data-act="lrm" data-i="${i}" aria-label="移除照片">${ic('x')}</button></div>`).join('')}
+    ${canUp?`<label class="addph" for="l-file" aria-label="加照片">${ic('plus')}</label><input id="l-file" type="file" accept="image/*" multiple hidden>`:''}</div>
+    <p class="hint" id="l-up">${canUp?'可拍下疹子、皮膚、嘔吐物或大便等，方便給醫師看。照片會自動壓縮。':'需要編輯權限才能上傳照片。'}</p></div>`;
+}
+async function uploadLogPhotos(e){
+  const files=[...e.target.files]; if(!files.length||!cur) return; syncFields();
+  const msg=document.getElementById('l-up'); cur.rec.photos=cur.rec.photos||[];
+  for(let i=0;i<files.length;i++){
+    if(msg) msg.textContent=`上傳中 ${i+1}/${files.length}…`;
+    try{
+      const blob=await shrink(files[i]);
+      if(S.mode==='local'){ cur.rec.photos.push(await blobToData(blob)) }
+      else { const up=await assetsCap.upload(blob,{type:'image/jpeg'}); cur.rec.photos.push(up.id); (cur.rec._fresh=cur.rec._fresh||[]).push(up.id) }
+    }catch(err){ console.error(err); const c=err&&(err.code||err.message)||''; toast(c==='quota_or_state'?'相簿空間已滿':c==='decode'?'這張照片格式讀不出來':c==='heiclib'?'網路不穩，轉檔工具載入失敗，請再試一次':'有一張照片上傳失敗（'+String(c).slice(0,40)+'）'); }
+  }
+  drawSheet();
+}
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='l-file') uploadLogPhotos(e) });
+async function dropAssets(ids){ if(assetsCap) for(const p of (ids||[])){ try{ await assetsCap.delete(p) }catch(e){} } }
 function grab(id){const el=document.getElementById(id);return el?el.value:''}
 function syncFields(){const r=cur.rec; const t=grab('f-t'); if(t) r.t=fromInput(t); const n=document.getElementById('f-note'); if(n) r.note=n.value;
   if(cur.type==='sleep'){const e=grab('f-end'); r.end=e?fromInput(e):null}
@@ -1555,14 +1578,17 @@ async function doSave(){
   if(type==='sick'){out.tags=r.tags||[]; if(r.sev)out.sev=r.sev; if(!out.tags.length&&!out.note){toast('請選一個症狀或寫備註');return}}
   if(type==='event'){out.what=r.what||[]; if(r.title)out.title=r.title; if(!out.what.length&&!out.title&&!out.note){toast('請選一項或寫標題');return}}
   if(type==='mood'){out.tags=r.tags||[]; if(!out.tags.length&&!out.note){toast('請選一個狀態或寫備註');return}}
+  if((type==='sick'||type==='event')&&(r.photos||[]).length) out.photos=r.photos;
   const ok=await saveLog(out); if(!ok) return;
+  if(r._removed&&r._removed.length) dropAssets(r._removed);
+  r._fresh=null;
   if(type==='poop'&&!r.id&&r.withPee) await saveLog({type:'pee',t:out.t});
   if(type==='breast'&&!r.id) resetTimer();
   closeSheet(); toast(`已記錄${TYPES[type].n} ${hm(out.t)}`);
   if(S.day!==startOfDay(out.t) && out.t<Date.now()) {S.day=startOfDay(out.t)}
   render();
 }
-function closeSheet(){document.getElementById('modal').innerHTML='';cur=null;render()}
+function closeSheet(){ if(cur&&cur.rec&&cur.rec._fresh) dropAssets(cur.rec._fresh); document.getElementById('modal').innerHTML='';cur=null;render()}
 
 /* growth sheet */
 function openGrowth(g){
@@ -1628,7 +1654,8 @@ document.addEventListener('click',async e=>{
     case 'save': doSave(); break;
     case 'askDel': syncFields(); drawSheet(true); break;
     case 'cancelDel': drawSheet(false); break;
-    case 'doDel': await delLog(cur.rec.id); closeSheet(); toast('已刪除'); break;
+    case 'lrm': syncFields(); { const [p]=cur.rec.photos.splice(+a.dataset.i,1); if(cur.rec._fresh&&cur.rec._fresh.includes(p)){ dropAssets([p]); cur.rec._fresh=cur.rec._fresh.filter(x=>x!==p) } else (cur.rec._removed=cur.rec._removed||[]).push(p) } drawSheet(); break;
+    case 'doDel': { const ph=(cur.rec.photos||[]).filter(x=>!x.startsWith('data:')); await delLog(cur.rec.id); dropAssets(ph); } closeSheet(); toast('已刪除'); break;
     case 'gadd': openGrowth(); break;
     case 'gedit': openGrowth(S.growth.find(g=>g.id===a.dataset.id)); break;
     case 'gclose': document.getElementById('modal').innerHTML=''; break;
