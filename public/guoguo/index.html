@@ -67,7 +67,7 @@ button{cursor:pointer;border:0;background:none}
 .since .tag.due{background:color-mix(in srgb,var(--warn) 18%,var(--surface));color:var(--warn)}
 
 .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
-.chip{background:var(--surface);border-radius:14px;padding:9px 6px 8px;text-align:center;border:1.5px solid color-mix(in srgb,var(--c) 30%,transparent)}
+.chip{background:var(--surface);border-radius:14px;padding:10px 4px 9px;text-align:center;box-shadow:var(--shadow)}
 .chip .ic{width:26px;height:26px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;margin:0 auto 3px}
 .chip .ic svg{width:18px;height:18px}
 .chip b{display:block;font-size:15px;font-weight:600}
@@ -107,6 +107,10 @@ button{cursor:pointer;border:0;background:none}
 .qa .badge{width:44px;height:44px;transition:transform .15s}
 .qa .badge svg{width:28px;height:28px}
 .qa:active .badge{transform:scale(.9)}
+.qa.xtra{display:none}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 4px;margin-top:6px}
+.mgrid .qa{flex:none}
+@media(min-width:700px){.qa.xtra{display:flex}.qa.more{display:none}}
 .runbar{pointer-events:auto;margin-bottom:8px;background:var(--c-breast);color:#fff;border-radius:999px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
 .runbar.sleep{background:var(--c-sleep)}
 .runbar span{flex:1;font-size:13.5px}
@@ -393,7 +397,7 @@ select.field{appearance:auto;padding:9px 8px}
   .qa{flex:none;font-size:12.5px}
   .qa:hover .badge{transform:scale(1.07)}
 
-  .chips{grid-template-columns:repeat(8,1fr)}
+  .chips{grid-template-columns:repeat(4,1fr)}
   .lasts{grid-template-columns:repeat(4,1fr)}
   .alb{grid-template-columns:repeat(4,1fr)}
 
@@ -801,15 +805,14 @@ function viewLog(){
   const chips=[
     ['breast',`${st.breast.n}次`,`左${Math.round(st.breast.L/60)}／右${Math.round(st.breast.R/60)}分`],
     ['formula',`${totalMl}<small style="display:inline;font-size:11px">ml</small>`,`瓶餵 ${st.bmilk.n+st.formula.n} 次`],
-    ['pee',`${st.pee.n}次`,'尿布'],['poop',`${st.poop.n}次`,'便便'],
-    ['sleep',durShort(st.sleep),'睡眠'],['temp',st.temp?st.temp.toFixed(1)+'°':'—','最近體溫'],
-    ['bmilk',`${st.bmilk.ml}ml`,'其中母乳'],['pump',`${st.pump.ml}ml`,`擠奶 ${st.pump.n} 次`],
+    ['pee',`${st.pee.n+st.poop.n}次`,`尿 ${st.pee.n}・便 ${st.poop.n}`],
+    ['sleep',durShort(st.sleep),'睡眠'],
   ].map(([t,b,s])=>`<div class="chip" style="--c:${cvar(t)}"><div class="ic">${ic(TYPES[t].ic)}</div><b class="num">${b}</b><small>${s}</small></div>`).join('');
 
   let sinceCard='';
   if(isToday && S.logs.length){
     const now=Date.now();
-    const nx=predict().map(p=>{
+    const nx=predict().filter(p=>!p.sleeping).map(p=>{
       if(p.sleeping) return `<div class="nx" style="--c:${cvar(p.type)}">${badge(p.type)}<div class="t">${p.label}<br><b class="num">已睡 ${dur(now-p.from)}</b><small>${hm(p.from)} 入睡</small></div></div>`;
       const end=p.at2||p.at, span=Math.max(end-p.from,1), late=now>(p.at2||p.at);
       const pos=Math.min(100,Math.max(0,(now-p.from)/span*100)), a=(p.at-p.from)/span*100;
@@ -826,7 +829,7 @@ function viewLog(){
         const l=lastOf(ts); if(!l) return '';
         const ref=l.type==='sleep'&&l.end?l.end:l.t;
         return `<button class="lastc" data-act="edit" data-id="${l.id}" style="--c:${cvar(t)}">${badge(t)}<div><b class="num">${l.type==='sleep'&&!l.end?'睡覺中':rel(now-ref)+'前'}</b><small>${n} · ${esc(f(l))}</small></div></button>`}).join('');
-    sinceCard=`${nx?`<div class="next"><h3>接下來<small>依記錄推估，僅供參考</small></h3>${nx}</div>`:''}<div class="lasts">${cards}</div>`;
+    sinceCard=`${nx?`<div class="next"><h3>接下來<small>依記錄推估，僅供參考</small></h3>${nx}</div>`:''}`;
   }
   const items=list.slice().sort((a,b)=>b.t-a.t);
   const tl = items.length? `<ul class="tl">${items.map(itemRow).join('')}</ul>` :
@@ -1397,6 +1400,14 @@ setInterval(()=>{ if(S.babyLoaded||S.mode==='local') notifyDue() },30*60*1000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) notifyDue() });
 
 /* ───────── tray ───────── */
+const TRAY_DEF=['breast','bmilk','pee','poop','sleep'];
+function trayOrder(){ return TRAY_DEF.concat(ORDER.filter(t=>!TRAY_DEF.includes(t))) }
+const TYPE_GROUPS=[['餵食',['breast','bmilk','formula','pump','solid']],['排泄與睡眠',['pee','poop','sleep']],['健康',['temp','sick','med']],['日常',['mood','bath','event']]];
+function drawMore(){
+  document.getElementById('modal').innerHTML=`<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="記錄類型">
+   <div class="grab"></div><div class="sh-hd"><span class="badge" style="--c:var(--primary)">${ic('plus')}</span><h3>要記錄什麼？</h3><button class="x" data-act="close" aria-label="關閉">${ic('x')}</button></div>
+   ${TYPE_GROUPS.map(([g,ts])=>`<div class="card"><span class="lbl">${g}</span><div class="mgrid">${ts.map(t=>`<button class="qa" data-new="${t}">${badge(t)}${TYPES[t].n}</button>`).join('')}</div></div>`).join('')}</div></div>`;
+}
 function renderTray(){
   const tray=document.getElementById('tray');
   if(S.tab!=='log'){tray.innerHTML='';return}
@@ -1405,7 +1416,7 @@ function renderTray(){
   let bar='';
   if(running) bar=`<div class="runbar"><span>餵奶計時中 · 左 <b class="num" id="rb-l">${mmss(sideSec(tm.L))}</b> 右 <b class="num" id="rb-r">${mmss(sideSec(tm.R))}</b></span><button data-act="opentimer">打開</button></div>`;
   else if(sleeping) bar=`<div class="runbar sleep"><span>${esc(S.baby.name||'寶寶')}睡覺中 · ${dur(Date.now()-sleeping.t)}</span><button data-act="wake" data-id="${sleeping.id}">起床</button></div>`;
-  tray.innerHTML=`<div class="tray-in">${bar}<div class="tray-card">${ORDER.map(t=>`<button class="qa" data-new="${t}" aria-label="記錄${TYPES[t].n}">${badge(t)}${TYPES[t].n.replace('瓶餵母乳','瓶餵母乳')}</button>`).join('')}</div></div>`;
+  tray.innerHTML=`<div class="tray-in">${bar}<div class="tray-card">${trayOrder().map((t,i)=>`<button class="qa${i>=5?' xtra':''}" data-new="${t}" aria-label="記錄${TYPES[t].n}">${badge(t)}${TYPES[t].n}</button>`).join('')}<button class="qa more" data-act="more" aria-label="更多記錄類型"><span class="badge" style="--c:var(--muted)">${ic('plus')}</span>更多</button></div></div>`;
 }
 
 /* ───────── breast timer (per device) ───────── */
@@ -1644,6 +1655,7 @@ document.addEventListener('click',async e=>{
     case 'edit': { e.stopPropagation(); const l=S.logs.find(x=>x.id===a.dataset.id); if(l) openSheet(l.type,l); break }
     case 'wake': { e.stopPropagation(); const l=S.logs.find(x=>x.id===a.dataset.id); if(l){await saveLog({...l,end:Date.now()}); toast(`睡了 ${dur(Date.now()-l.t)}，早安！`)} break }
     case 'opentimer': openSheet('breast'); break;
+    case 'more': drawMore(); break;
     case 'close': closeSheet(); break;
     case 'side': syncFields(); toggleSide(a.dataset.k); drawSheet(); renderTray(); break;
     case 'treset': resetTimer(); drawSheet(); renderTray(); break;
