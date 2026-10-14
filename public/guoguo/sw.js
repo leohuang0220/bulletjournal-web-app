@@ -1,6 +1,6 @@
 // 果果日記離線快取：頁面與圖示先存；資料由 Firebase 自己離線同步
 const CACHE = 'guoguo-v12';
-const CORE = ['./', './index.html', './config.js', './money.js', './app.webmanifest', './icons/b-icon-192.png', './icons/b-icon-512.png', './icons/b-apple-touch-icon.png', './icons/face.jpg'];
+const CORE = ['./', './index.html', './config.js', './app.webmanifest', './icons/b-icon-192.png', './icons/b-icon-512.png', './icons/b-apple-touch-icon.png', './icons/face.jpg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
@@ -14,7 +14,7 @@ self.addEventListener('fetch', e => {
   const sameOrigin = url.origin === location.origin;
   const isStatic = ['fonts.googleapis.com', 'fonts.gstatic.com', 'www.gstatic.com'].includes(url.hostname);
   if (!sameOrigin && !isStatic) return; // Firebase / Gemini 走網路
-  if (req.mode === 'navigate' || url.pathname.endsWith('/config.js') || url.pathname.endsWith('/money.js') || url.pathname.endsWith('.webmanifest')) {
+  if (req.mode === 'navigate' || url.pathname.endsWith('/config.js') || url.pathname.endsWith('.webmanifest')) {
     e.respondWith(fetch(req).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put(req.mode === 'navigate' ? './index.html' : req, c)); return r; })
       .catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req)));
     return;

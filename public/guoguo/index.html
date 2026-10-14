@@ -19,7 +19,7 @@
   --bg:#FFF5F7; --surface:#FFFFFF; --ink:#4B3F57; --muted:#9C90A6; --line:#F4DEE4;
   --primary:#EE7D95; --primary-deep:#D9607B; --on-primary:#FFFFFF;
   --c-breast:#F07E9A; --c-bmilk:#F59E7E; --c-formula:#F2B23A; --c-pump:#C69ADB;
-  --c-pee:#4FC2A7; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --primary-soft:#FDE3E8;
+  --c-pee:#4FC2A7; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --c-bath:#4DB6E8; --c-sick:#E8845A; --c-event:#8E9BD6; --primary-soft:#FDE3E8;
   --warn:#E5484D; --ok:#2E9E7A;
   --band:#F7E9EE; --shadow:0 6px 20px rgba(214,96,123,.12);
   --f:"Fredoka","Huninn","PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
@@ -203,7 +203,7 @@ button{cursor:pointer;border:0;background:none}
 .btnline{display:flex;gap:8px;flex-wrap:wrap}
 .btn2{border-radius:999px;padding:10px 16px;background:var(--surface);border:1.5px solid var(--line);font-size:14px}
 .note{font-size:12.5px;color:var(--muted);line-height:1.7}
-.tabs-in{grid-template-columns:repeat(6,1fr)}
+.tabs-in{grid-template-columns:repeat(5,1fr)}
 /* what's next + last cards */
 .next{margin-top:14px;background:var(--surface);border-radius:var(--r);padding:12px 14px 10px;box-shadow:var(--shadow)}
 .next h3{margin:0 0 8px;font-family:"Huninn",var(--f);font-weight:400;font-size:15px;color:var(--primary-deep);display:flex;justify-content:space-between;align-items:baseline}
@@ -317,48 +317,6 @@ button{cursor:pointer;border:0;background:none}
 .more{width:100%;padding:8px;color:var(--primary-deep);font-size:13.5px;margin:-4px 0 10px}
 .link{color:var(--primary-deep);font-size:13px;margin-top:6px;text-decoration:underline}
 .ckrow{display:flex;align-items:center;gap:8px;font-size:15px}.ckrow input{width:20px;height:20px;accent-color:var(--c-pee)}
-/* 花費 */
-.mb{width:34px;height:34px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;flex:none;font-family:"Huninn",var(--f);font-size:16px;line-height:1}
-.mb.big{width:34px;height:34px}
-.mhead{margin-top:14px;box-shadow:var(--shadow)}
-.mtot{display:flex;align-items:flex-start;gap:10px}
-.mtot>div{flex:1;min-width:0}
-.mtot small{font-size:12.5px;color:var(--muted)}
-.mtot b{display:block;font-size:32px;font-weight:600;color:var(--primary-deep);line-height:1.2}
-.mtot .sub{font-size:12.5px;color:var(--muted)}
-.mtot .mini{background:var(--primary-soft);color:var(--primary-deep);padding:8px;border-radius:50%;display:grid;place-items:center}
-.mtot .mini svg{width:18px;height:18px}
-.bud{margin-top:10px}
-.bud-bar{height:10px;border-radius:9px;background:var(--line);position:relative;overflow:visible}
-.bud-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px}
-.bud-bar em{position:absolute;top:-3px;width:2px;height:16px;background:var(--ink);opacity:.45}
-.bud small{display:block;font-size:12.5px;color:var(--muted);margin-top:6px}
-.mact{display:flex;gap:8px}
-.mact .addbtn{flex:1;font-size:14.5px}
-.addbtn.ghost2{background:var(--surface);color:var(--primary-deep);border:1.5px solid var(--primary-soft);cursor:pointer}
-.donut{display:flex;gap:12px;align-items:center;box-shadow:var(--shadow)}
-.donut svg{width:132px;height:132px;flex:none}
-.donut text{font-family:var(--f)}
-.mcl{list-style:none;margin:0;padding:0;flex:1;min-width:0}
-.mcl button{display:flex;align-items:center;gap:8px;width:100%;padding:5px 0;text-align:left}
-.mcl .mb{width:24px;height:24px;font-size:12px}
-.mcl .nm{flex:1;min-width:0;font-size:13.5px}
-.bar2{display:block;height:4px;border-radius:4px;background:var(--line);margin-top:3px;overflow:hidden}
-.bar2 i{display:block;height:100%;border-radius:4px}
-.mcl .v{font-size:13.5px;font-weight:600;text-align:right;min-width:64px}
-.mcl .v small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
-.tl .amt{font-weight:600;color:var(--ink);flex:none;text-align:right;font-size:15px}
-.tl .amt small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
-.tl .amt.gift{color:var(--c-med);font-size:13px}
-.mpills{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-.mpills::-webkit-scrollbar{display:none}
-.mpills .pill{flex:none;font-size:13px;padding:6px 12px}
-.field.big{font-size:24px;font-weight:600}
-.field:disabled{opacity:.4}
-.scrow{padding:10px 12px}
-.scrow input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--primary)}
-select.field{appearance:auto;padding:9px 8px}
-.code{font-size:26px;font-weight:600;letter-spacing:2px;text-align:center;background:var(--primary-soft);color:var(--primary-deep);border-radius:14px;padding:12px;margin:8px 0 0;user-select:all}
 /* ───── 平板：畫面加寬 ───── */
 @media (min-width:700px){
   .app,.tray-in,.tabs-in{max-width:720px}
@@ -419,6 +377,9 @@ select.field{appearance:auto;padding:9px 8px}
     <symbol id="i-mood" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11" fill="currentColor" fill-opacity=".25"/><circle cx="12" cy="14" r="1.3" fill="currentColor"/><circle cx="20" cy="14" r="1.3" fill="currentColor"/><path d="M11.5 19c2.5 3 6.5 3 9 0"/><circle cx="8.8" cy="18" r="1.4" fill="currentColor" fill-opacity=".5" stroke="none"/><circle cx="23.2" cy="18" r="1.4" fill="currentColor" fill-opacity=".5" stroke="none"/></g></symbol>
     <symbol id="i-solid" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 15h23a11.5 11.5 0 0 1-23 0z" fill="currentColor" fill-opacity=".3"/><path d="M12 27h8"/><path d="M20 12l7-8"/><ellipse cx="25.5" cy="5.5" rx="2" ry="3" transform="rotate(40 25.5 5.5)"/><path d="M10 11c0-2 2-2 2-4M15 11c0-2 2-2 2-4"/></g></symbol>
     <symbol id="i-med" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h6v4h-6z" fill="currentColor" fill-opacity=".35"/><path d="M11 8h10v4l1.5 2v12a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V14L11 12z"/><path d="M16 16.5v6M13 19.5h6"/></g></symbol>
+    <symbol id="i-bath" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 15h25v2a8 8 0 0 1-8 8h-9a8 8 0 0 1-8-8z" fill="currentColor" fill-opacity=".28"/><path d="M8 25l-1.5 3M24 25l1.5 3"/><path d="M7 15V9a3.5 3.5 0 0 1 6.5-1.8"/><circle cx="19" cy="10" r="1.2"/><circle cx="23.5" cy="7.5" r="1"/><circle cx="25" cy="12" r=".9"/></g></symbol>
+    <symbol id="i-sick" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11" fill="currentColor" fill-opacity=".22"/><path d="M10.5 13l3 1.3M21.5 13l-3 1.3"/><path d="M11.5 22c2.6-2.6 6.4-2.6 9 0"/><path d="M22 6.5c1.2 1.6 2 2.6 2 3.8a2 2 0 0 1-4 0c0-1.2.8-2.2 2-3.8z" fill="currentColor" fill-opacity=".5"/></g></symbol>
+    <symbol id="i-event" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="20" rx="4" fill="currentColor" fill-opacity=".22"/><path d="M11 4v5M21 4v5M5 13h22"/><path d="M16 16.2l1.6 3.2 3.5.5-2.5 2.4.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.5-2.4 3.5-.5z" fill="currentColor" fill-opacity=".5"/></g></symbol>
     <symbol id="i-photo" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a3 3 0 0 1 3-3h3l2-3h8l2 3h3a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><circle cx="16" cy="17" r="5" fill="currentColor" fill-opacity=".25"/><circle cx="24" cy="12" r=".8" fill="currentColor"/></g></symbol>
     <symbol id="i-flag" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 28V4"/><path d="M8 5h15l-3.5 5L23 15H8" fill="currentColor" fill-opacity=".3"/><path d="M12 9.5l1 1.2 2.5-2.5"/></g></symbol>
     <symbol id="i-album" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></g></symbol>
@@ -439,7 +400,6 @@ select.field{appearance:auto;padding:9px 8px}
     <symbol id="i-vax" viewBox="0 0 24 24"><path d="M17 3l4 4M19 5l-3 3M14.5 5.5l4 4M8 11l2 2M11 8l2 2M16.5 7.5l-9 9-3.5 1 1-3.5 9-9M4.5 19.5L3 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16zM10 20.5a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-coin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="7.5" ry="3"/><path d="M4.5 7v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V7"/><path d="M4.5 12v5c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-5"/></g></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
@@ -468,8 +428,11 @@ const TYPES = {
   mood:{n:'寶寶狀態',c:'--c-mood',ic:'mood'},
   solid:{n:'副食品',c:'--c-solid',ic:'solid'},
   med:{n:'用藥',c:'--c-med',ic:'med'},
+  bath:{n:'洗澡',c:'--c-bath',ic:'bath'},
+  sick:{n:'不舒服',c:'--c-sick',ic:'sick'},
+  event:{n:'其他事件',c:'--c-event',ic:'event'},
 };
-const ORDER = ['breast','bmilk','formula','pee','poop','sleep','pump','temp','mood','solid','med'];
+const ORDER = ['breast','bmilk','formula','pee','poop','sleep','pump','temp','mood','bath','sick','solid','med','event'];
 const MILESTONES = ['回家囉','滿月','第一次洗澡','第一次笑','會抬頭','會翻身','長牙','會坐','會爬','叫爸爸媽媽','會站','第一步','收涎','抓周'];
 const FEEDS = ['breast','bmilk','formula'];
 /* 台灣嬰兒大便卡：1–3 號（灰白、淡黃）需盡快就醫 */
@@ -479,6 +442,10 @@ const POOP_COLORS = [
   {k:'black',n:'黑色',hex:'#2B2522',warn:true},{k:'red',n:'帶血絲',hex:'#C8403F',warn:true}];
 const POOP_TEX = ['水狀','稀糊','軟糊','條狀','硬粒'];
 const AMOUNT = ['少','中','多'];
+const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
+const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
+const SICK_SEV=['輕微','中等','嚴重'];
+const EVENT_TAG=['看醫生','打疫苗','健康檢查','日光浴','外出','按摩','拍照','訪客','旅行','其他'];
 const MOODS = ['開心','安穩','哭鬧','難安撫','吐奶','溢奶','打嗝','脹氣','紅屁屁','鼻塞','咳嗽','黃疸'];
 /* WHO 0–12 月（P3 / P50 / P97）近似值 */
 const WHO_F = {
@@ -542,7 +509,7 @@ let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   fb = firebase.initializeApp(window.FIREBASE_CONFIG);
@@ -589,7 +556,6 @@ function attachFamily(ref){
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   subs.push(db.collection('moments').orderBy('t','desc').limit(500).onSnapshot(snap=>{S.moments=snap.docs.map(d=>({id:d.id,...d.data()}));if(!document.querySelector('.scrim'))render()},fsErr));
-  moneyAttach();
   assetsCap={
     async upload(blob){ const d=await blobToData(blob); const r=famRef.collection('photos').doc(); await r.set({d,t:Date.now()}); PHOTOS[r.id]=d; return {id:r.id} },
     async delete(id){ await famRef.collection('photos').doc(id).delete(); delete PHOTOS[id] }
@@ -765,11 +731,10 @@ function render(){
   else if(S.tab==='sum') app.innerHTML=viewSum();
   else if(S.tab==='grow') app.innerHTML=viewGrow();
   else if(S.tab==='album') app.innerHTML=viewAlbum();
-  else if(S.tab==='money') app.innerHTML=viewMoney();
   else app.innerHTML=viewSet();
 }
 function renderTabs(){
-  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['money','花費','coin'],['album','相簿','album'],['set','設定','gear']];
+  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['album','相簿','album'],['set','設定','gear']];
   document.getElementById('tabs').innerHTML=t.map(([k,n,i])=>`<button class="tab" role="tab" aria-selected="${S.tab===k}" data-tab="${k}">${ic(i)}${n}</button>`).join('');
 }
 function header(sub){
@@ -838,8 +803,11 @@ function itemRow(l){
   if(l.type==='mood'&&l.tags&&l.tags.length){v=l.tags.join('、')}
   if(l.type==='solid'){v=[l.food,l.qty].filter(Boolean).join(' '); if(l.react&&l.react!=='沒有異常'){flag=l.react}}
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
+  if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
+  if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
+  if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title].filter(Boolean).join('・')}
   if(l.note) meta.push(esc(l.note));
-  const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0])); else if(l.via) meta.push(esc(l.via));
+  const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0]));
   const outOfDay = l.t<S.day;
   return `<li data-act="edit" data-id="${l.id}" style="--c:${cvar(l.type)}"><span class="tm num">${outOfDay?'昨':hm(l.t)}</span>${badge(l.type)}
     <div class="body"><b>${T.n}</b><span class="val num">${esc(v)}</span>${flag?`<span class="flag">${flag}</span>`:''}${meta.length?`<span class="meta">${meta.join(' · ')}</span>`:''}</div>${extra}</li>`;
@@ -989,7 +957,6 @@ function viewSet(){
    <div class="card"><label class="lbl" for="s-iv">餵奶間隔提醒（小時，0 = 不顯示）</label><input class="field" id="s-iv" type="number" inputmode="decimal" min="0" max="8" step="0.5" value="${S.baby.interval??3}"><p class="hint">首頁會顯示「預計下次餵奶」時間，超過時標成紅色。</p></div>
    <button class="addbtn" data-act="saveset">${ic('check')}儲存設定</button>
    ${familyCard()}
-   ${lineCard()}
    ${Object.values(S.care.ov||{}).some(o=>o.hide)?`<div class="card"><span class="lbl">疫苗與健檢</span><p class="hint" style="margin:0 0 8px">有 ${Object.values(S.care.ov).filter(o=>o.hide).length} 個預設項目被隱藏。</p><button class="mini" data-act="cunhide">恢復隱藏項目</button></div>`:''}
    <div class="sect"><h2>使用說明</h2></div>
    <div class="btnline"><button class="btn2" data-act="reob">重新看功能介紹與基本資料設定</button>${fsOk()?`<button class="btn2" data-act="fs">${document.fullscreenElement?'離開全螢幕':'全螢幕模式'}</button>`:''}</div>
@@ -999,7 +966,7 @@ function viewSet(){
      <button class="btn2" data-act="savekey" style="margin-top:8px">儲存金鑰</button></div>
    <div class="sect"><h2>匯出</h2></div>
    <div class="btnline"><button class="btn2" data-act="export">匯出近 30 天記錄（CSV）</button></div>
-   <p class="hint">可用 Excel 或 Google 試算表開啟，回診時給醫師看。花費可到「花費 → 明細」匯出。</p></div>`;
+   <p class="hint">可用 Excel 或 Google 試算表開啟，回診時給醫師看。</p></div>`;
 }
 
 /* ───────── AI helper ───────── */
@@ -1025,7 +992,7 @@ function aiPayload(){
       pumpMl:st.pump.ml, pee:st.pee.n, poop:st.poop.n, poopNotes:inD.filter(l=>l.type==='poop').map(l=>[POOP_COLORS.find(p=>p.k===l.color)?.n,l.tex].filter(Boolean).join('/')).filter(Boolean),
       sleepHours:+(st.sleep/36e5).toFixed(1), longestSleepH:+(Math.max(0,...S.logs.filter(l=>l.type==='sleep'&&l.end&&l.t>=d&&l.t<d+DAY).map(l=>l.end-l.t))/36e5).toFixed(1),
       maxTemp:Math.max(0,...inD.filter(l=>l.type==='temp').map(l=>+l.c))||null, moods:[...new Set(inD.filter(l=>l.type==='mood').flatMap(l=>l.tags||[]))],
-      solids:inD.filter(l=>l.type==='solid').map(l=>[l.food,l.qty,l.react].filter(Boolean).join(' ')), meds:inD.filter(l=>l.type==='med').map(l=>[l.drug,l.dose].filter(Boolean).join(' ')),
+      solids:inD.filter(l=>l.type==='solid').map(l=>[l.food,l.qty,l.react].filter(Boolean).join(' ')), baths:inD.filter(l=>l.type==='bath').length, sickness:inD.filter(l=>l.type==='sick').map(l=>[(l.tags||[]).join('/'),l.sev].filter(Boolean).join(' ')), events:inD.filter(l=>l.type==='event').map(l=>[(l.what||[]).join('/'),l.title].filter(Boolean).join(' ')), meds:inD.filter(l=>l.type==='med').map(l=>[l.drug,l.dose].filter(Boolean).join(' ')),
       notes:inD.filter(l=>l.note).map(l=>TYPES[l.type]?.n+'：'+l.note).slice(0,6)}});
   const corr=(a&&S.baby.ga&&S.baby.ga<37)?+(a.months-(40-S.baby.ga)/4.345).toFixed(1):null;
   const growth=S.growth.slice(-4).map(g=>({date:g.d,kg:g.w,cm:g.h,headCm:g.hc}));
@@ -1481,6 +1448,25 @@ function drawSheet(confirming){
       <div class="card"><span class="lbl">吃完的反應</span><div class="pills">${['沒有異常','喜歡','不喜歡','起疹子','腹瀉','嘔吐'].map(a=>`<button class="pill" style="--c:var(--c-solid)" data-pick="react" data-v="${a}" aria-pressed="${rec.react===a}">${a}</button>`).join('')}</div>
       <p class="hint">新食材建議一次只加一種、觀察 3 天，方便找出過敏原。</p></div>`+timeField('f-t','時間',rec.t);
   }
+  if(type==='bath'){
+    const tags=rec.tags||[];
+    body+=`<div class="card"><span class="lbl">怎麼洗</span><div class="pills">${BATH_HOW.map(a=>`<button class="pill" style="--c:var(--c-bath)" data-pick="how" data-v="${a}" aria-pressed="${rec.how===a}">${a}</button>`).join('')}</div>
+      <span class="lbl" style="margin-top:12px">順便做了（可複選）</span><div class="pills">${BATH_TAG.map(m=>`<button class="pill" style="--c:var(--c-bath)" data-tag="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
+      <div style="display:flex;gap:10px;margin-top:12px"><div style="flex:1"><label class="lbl" for="f-wt">水溫 °C（選填）</label><input class="field num" id="f-wt" type="number" inputmode="decimal" min="30" max="45" step="0.5" value="${rec.wt??''}" placeholder="約 37–38"></div>
+      <div style="flex:1"><label class="lbl" for="f-bmin">洗幾分鐘（選填）</label><input class="field num" id="f-bmin" type="number" inputmode="numeric" min="1" max="60" value="${rec.min??''}" placeholder="例如 10"></div></div>
+      <p class="hint">水溫約 37–38°C、用手肘內側試溫；洗完後 5 分鐘內擦乾保暖。</p></div>`+timeField('f-t','時間',rec.t);
+  }
+  if(type==='sick'){
+    const tags=rec.tags||[];
+    body+=`<div class="card"><span class="lbl">哪裡不舒服（可複選）</span><div class="pills">${SICK_TAG.map(m=>`<button class="pill" style="--c:var(--c-sick)" data-tag="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
+      <span class="lbl" style="margin-top:12px">嚴重程度</span><div class="pills">${SICK_SEV.map(a=>`<button class="pill" style="--c:var(--c-sick)" data-pick="sev" data-v="${a}" aria-pressed="${rec.sev===a}">${a}</button>`).join('')}</div>
+      <p class="hint warn">以下情況請立即就醫：未滿 3 個月發燒 ≥38°C、呼吸急促或胸口凹陷、嘔吐物帶綠色或血、持續高燒、精神很差叫不醒、尿量明顯變少、灰白便。</p></div>`+timeField('f-t','開始時間',rec.t);
+  }
+  if(type==='event'){
+    const tags=rec.what||[];
+    body+=`<div class="card"><span class="lbl">發生了什麼（可複選）</span><div class="pills">${EVENT_TAG.map(m=>`<button class="pill" style="--c:var(--c-event)" data-what="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
+      <label class="lbl" for="f-title" style="margin-top:12px">簡短標題（選填）</label><input class="field" id="f-title" maxlength="40" value="${esc(rec.title||'')}" placeholder="例如：小兒科回診、第一次出門"></div>`+timeField('f-t','時間',rec.t);
+  }
   if(type==='med'){
     body+=`<div class="card"><label class="lbl" for="f-drug">藥名／保健品</label><input class="field" id="f-drug" value="${esc(rec.drug||'')}" placeholder="例如：維生素D滴劑" maxlength="40">
       <label class="lbl" for="f-dose" style="margin-top:10px">劑量</label><input class="field" id="f-dose" value="${esc(rec.dose||'')}" placeholder="例如：1 滴、2.5 ml" maxlength="20">
@@ -1499,7 +1485,9 @@ function syncFields(){const r=cur.rec; const t=grab('f-t'); if(t) r.t=fromInput(
   if(cur.type==='sleep'){const e=grab('f-end'); r.end=e?fromInput(e):null}
   if(cur.type==='pump'){r.left=+grab('f-pl')||0;r.right=+grab('f-pr')||0}
   if(cur.type==='solid'){r.food=grab('f-food').trim();r.qty=grab('f-qty').trim()}
-  if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}}
+  if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}
+  if(cur.type==='bath'){r.wt=grab('f-wt');r.min=grab('f-bmin')}
+  if(cur.type==='event'){r.title=grab('f-title').trim()}}
 async function doSave(){
   syncFields(); const r=cur.rec, type=cur.type;
   const out={type,t:r.t||Date.now()}; if(r.id) out.id=r.id; if(r.by) out.by=r.by; if(r.note) out.note=r.note.trim();
@@ -1517,6 +1505,9 @@ async function doSave(){
   if(type==='temp'){out.c=+document.getElementById('f-c').textContent; if(r.site) out.site=r.site}
   if(type==='solid'){if(!r.food){toast('請填吃了什麼');return} out.food=r.food; if(r.qty)out.qty=r.qty; if(r.react)out.react=r.react}
   if(type==='med'){if(!r.drug){toast('請填藥名');return} out.drug=r.drug; if(r.dose)out.dose=r.dose}
+  if(type==='bath'){ if(r.how)out.how=r.how; out.tags=r.tags||[]; if(+r.wt)out.wt=+r.wt; if(+r.min)out.min=+r.min }
+  if(type==='sick'){out.tags=r.tags||[]; if(r.sev)out.sev=r.sev; if(!out.tags.length&&!out.note){toast('請選一個症狀或寫備註');return}}
+  if(type==='event'){out.what=r.what||[]; if(r.title)out.title=r.title; if(!out.what.length&&!out.title&&!out.note){toast('請選一項或寫標題');return}}
   if(type==='mood'){out.tags=r.tags||[]; if(!out.tags.length&&!out.note){toast('請選一個狀態或寫備註');return}}
   const ok=await saveLog(out); if(!ok) return;
   if(type==='poop'&&!r.id&&r.withPee) await saveLog({type:'pee',t:out.t});
@@ -1549,6 +1540,7 @@ document.addEventListener('click',async e=>{
   const sml=e.target.closest('[data-setml]'); if(sml){document.getElementById('f-ml').textContent=sml.dataset.setml;document.querySelectorAll('[data-setml]').forEach(b=>b.setAttribute('aria-pressed',b===sml));return}
   const pk=e.target.closest('[data-pick]'); if(pk&&cur){syncFields();const k=pk.dataset.pick;cur.rec[k]=cur.rec[k]===pk.dataset.v?undefined:pk.dataset.v;drawSheet();return}
   const tg=e.target.closest('[data-tag]'); if(tg&&cur){const tags=new Set(cur.rec.tags||[]);tags.has(tg.dataset.tag)?tags.delete(tg.dataset.tag):tags.add(tg.dataset.tag);cur.rec.tags=[...tags];tg.setAttribute('aria-pressed',tags.has(tg.dataset.tag));return}
+  const wh=e.target.closest('[data-what]'); if(wh&&cur){syncFields();const w=new Set(cur.rec.what||[]);w.has(wh.dataset.what)?w.delete(wh.dataset.what):w.add(wh.dataset.what);cur.rec.what=[...w];wh.setAttribute('aria-pressed',w.has(wh.dataset.what));return}
   const fd=e.target.closest('[data-food]'); if(fd){document.getElementById('f-food').value=fd.dataset.food;return}
   const ss=e.target.closest('[data-sset]'); if(ss){S.baby[ss.dataset.sset]=ss.dataset.v;document.querySelectorAll(`[data-sset="${ss.dataset.sset}"]`).forEach(b=>b.setAttribute('aria-pressed',b===ss));return}
   const cvb=e.target.closest('[data-cv]'); if(cvb){S.careView=cvb.dataset.cv;render();return}
@@ -1632,10 +1624,9 @@ async function exportCsv(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.scrim')){ccur=null;if(mcur){closeMoment();return}document.getElementById('modal').innerHTML='';cur=null;render()}});
 
 if(location.hash==='#care'){S.tab='grow';S.careView='care'}
-if(location.hash==='#money'){S.tab='money'}
-window.addEventListener('DOMContentLoaded',()=>{render();initStore()});
+render();
+initStore();
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
-<script src="money.js"></script>
 </body>
 </html>
