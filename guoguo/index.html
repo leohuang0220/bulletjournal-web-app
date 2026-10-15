@@ -560,13 +560,22 @@ async function initStore(){
     S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
+  const c=ls('bl_cache');
+  if(c&&c.fid){ // 先用上次的畫面，不等網路
+    S.logs=c.logs||[]; S.growth=c.growth||[]; S.baby={...S.baby,...(c.baby||{})}; S.care={ov:{},own:{},...(c.care||{})}; S.names=c.names||{};
+    S.ready=true; S.babyLoaded=true; S.booting=true; render();
+  } else showGate('loading');
   fb = firebase.initializeApp(window.FIREBASE_CONFIG);
+  try{ await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL) }catch(e){}
   try{ await firebase.firestore().enablePersistence({synchronizeTabs:true}) }catch(e){}
   firebase.auth().getRedirectResult().catch(e=>{ if(e&&e.code) gateMsg(authMsg(e)) });
   firebase.auth().onAuthStateChanged(async u=>{
     subs.forEach(f=>f()); subs=[]; famRef=null;
-    if(!u){ me=null; showGate('login'); return }
-    me=u; S.uid=u.uid; showGate('loading');
+    if(!u){ me=null; S.booting=false; ls('bl_cache',null); showGate('login'); return }
+    me=u; S.uid=u.uid;
+    const cc=ls('bl_cache');
+    if(cc&&cc.fid&&cc.uid===u.uid){ attachFamily(firebase.firestore().collection('families').doc(cc.fid),true); return }
+    showGate('loading');
     await findFamily();
   });
 }
@@ -589,19 +598,24 @@ async function createFamily(){
   await ref.set({emails:[email],members:{[me.uid]:me.displayName||email},owner:me.uid,created:Date.now()});
   attachFamily(ref);
 }
-function attachFamily(ref){
-  famRef=ref; S.mode='db'; hideGate();
+let _cacheT=0;
+function saveCache(){ clearTimeout(_cacheT); _cacheT=setTimeout(()=>{ if(S.mode!=='db'||!famRef||!S.uid) return;
+  const cut=startOfDay(Date.now())-2*DAY;
+  ls('bl_cache',{fid:famRef.id,uid:S.uid,baby:S.baby,care:S.care,growth:S.growth,names:S.names,logs:S.logs.filter(l=>l.t>=cut||(l.type==='sleep'&&!l.end)).slice(0,300).map(l=>{const {photos,...r}=l;return photos?{...r,photos:photos.filter(p=>!String(p).startsWith('data:'))}:r})});
+ },800) }
+function attachFamily(ref,fromCache){
+  famRef=ref; S.mode='db'; S.booting=false; hideGate();
   db={collection:p=>famRef.collection(p), doc:p=>{const [c,d]=p.split('/');return famRef.collection(c).doc(d)}};
   const fsErr=e=>{console.warn(e); if(e&&e.code==='permission-denied'){toast('你已不在這本日記的成員名單中');}};
-  subs.push(famRef.onSnapshot(s=>{ const d=s.data()||{}; S.fam=d; S.names=d.members||{};
+  subs.push(famRef.onSnapshot(s=>{ saveCache(); const d=s.data()||{}; S.fam=d; S.names=d.members||{};
     if(me&&!(d.members||{})[me.uid]) famRef.update({['members.'+me.uid]:me.displayName||me.email}).catch(()=>{});
-    if(!document.querySelector('.scrim')) render() },fsErr));
+    if(!document.querySelector('.scrim')) render() },e=>{ if(fromCache&&e&&e.code==='permission-denied'){ ls('bl_cache',null); subs.forEach(f=>f()); subs=[]; famRef=null; S.mode=undefined; showGate('loading'); findFamily(); return } fsErr(e) }));
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
-    S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); },fsErr));
+    S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); saveCache(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
   subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
-  subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
+  subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   subs.push(db.collection('moments').orderBy('t','desc').limit(500).onSnapshot(snap=>{S.moments=snap.docs.map(d=>({id:d.id,...d.data()}));if(!document.querySelector('.scrim'))render()},fsErr));
   moneyAttach();
@@ -623,7 +637,7 @@ function showGate(kind){
   const gsvg='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
   let body='';
   if(kind==='login') body=`<h2>果果日記</h2><p class="lead">用 Google 帳號登入，爸爸媽媽的記錄會自動同步。</p>
-     <button class="gbtn" data-gate="login">${gsvg}用 Google 登入</button>`;
+     <button class="gbtn" data-gate="login">${gsvg}用 Google 登入</button>${inApp()?`<p class="hint warn" style="margin-top:14px">你現在是在 ${inApp()} 裡開啟，這裡登入不會被記住。請點右上角「⋯」選「用瀏覽器開啟」，或直接從手機主畫面的果果日記圖示打開。</p>`:''}`;
   else if(kind==='loading') body=`<h2>果果日記</h2><p class="lead">正在打開日記…</p>`;
   else if(kind==='nofamily') body=`<h2>嗨，${esc(me.displayName||'')}</h2><p class="lead">這個帳號（${esc(me.email||'')}）還沒有日記。</p>
      <button class="gbtn" data-gate="create">${ic('plus')}建立新的果果日記</button>
@@ -632,6 +646,7 @@ function showGate(kind){
      <button class="alt" data-gate="logout">換一個帳號</button>`;
   g.innerHTML=`<div class="gate-in"><div class="ob-hero"><img class="face" src="icons/face.jpg" alt="果果"></div>${body}<p class="hint warn" id="gate-msg">${S.gateMsg||''}</p></div>`;
 }
+function inApp(){const u=navigator.userAgent||''; return /\bLine\//i.test(u)?'LINE':/FBAN|FBAV|FB_IAB/.test(u)?'Facebook':/Instagram/.test(u)?'Instagram':/GSA\//.test(u)?'Google App':''}
 function hideGate(){document.getElementById('gate')?.remove(); S.gateMsg=''}
 function gateMsg(m){S.gateMsg=m; const el=document.getElementById('gate-msg'); if(el) el.textContent=m}
 document.addEventListener('click',async e=>{
@@ -641,7 +656,7 @@ document.addEventListener('click',async e=>{
     try{ await firebase.auth().signInWithPopup(p) }catch(err){ if(err.code==='auth/popup-blocked'||err.code==='auth/operation-not-supported-in-this-environment'){ firebase.auth().signInWithRedirect(p) } else gateMsg(authMsg(err)) } }
   if(k==='create'){ b.disabled=true; try{ await createFamily() }catch(err){ gateMsg('建立失敗：'+(err.code||err.message)); b.disabled=false } }
   if(k==='recheck'){ showGate('loading'); await findFamily() }
-  if(k==='logout'){ await firebase.auth().signOut() }
+  if(k==='logout'){ ls('bl_cache',null); await firebase.auth().signOut() }
 });
 async function resolveNames(){}
 function writeErr(e){
@@ -1400,7 +1415,7 @@ setInterval(()=>{ if(S.babyLoaded||S.mode==='local') notifyDue() },30*60*1000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) notifyDue() });
 
 /* ───────── tray ───────── */
-const TRAY_DEF=['breast','bmilk','pee','poop','sleep'];
+const TRAY_DEF=['bmilk','formula','pump','pee','poop'];
 function trayOrder(){ return TRAY_DEF.concat(ORDER.filter(t=>!TRAY_DEF.includes(t))) }
 const TYPE_GROUPS=[['餵食',['breast','bmilk','formula','pump','solid']],['排泄與睡眠',['pee','poop','sleep']],['健康',['temp','sick','med']],['日常',['mood','bath','event']]];
 function drawMore(){
@@ -1616,7 +1631,7 @@ function openGrowth(g){
 /* ───────── events ───────── */
 document.addEventListener('click',async e=>{
   const tabB=e.target.closest('[data-tab]'); if(tabB){S.tab=tabB.dataset.tab;render();window.scrollTo(0,0);return}
-  const nw=e.target.closest('[data-new]'); if(nw){ if(S.readOnly){toast('你目前只能查看');return} openSheet(nw.dataset.new); return}
+  const nw=e.target.closest('[data-new]'); if(nw){ if(S.booting){toast('正在連線，請稍等一下');return} if(S.readOnly){toast('你目前只能查看');return} openSheet(nw.dataset.new); return}
   const sm=e.target.closest('[data-sum]'); if(sm){S.sumMode=sm.dataset.sum;render();return}
   const gm=e.target.closest('[data-g]'); if(gm){S.gMode=gm.dataset.g;render();return}
   const al=e.target.closest('[data-alarm]'); if(al){const t=timer();t.alarm=+al.dataset.alarm;t.rang={};setTimer(t);syncFields();drawSheet();return}
@@ -1682,7 +1697,7 @@ document.addEventListener('click',async e=>{
       try{ await famRef.update({emails:firebase.firestore.FieldValue.arrayUnion(em)}); toast('已加入，請對方用這個帳號登入') }catch(e){writeErr(e)} break }
     case 'rmmem': { if(a.dataset.sure!=='1'){a.dataset.sure='1';a.textContent='確定移除？';return}
       try{ await famRef.update({emails:firebase.firestore.FieldValue.arrayRemove(a.dataset.em)}) }catch(e){writeErr(e)} break }
-    case 'logout': await firebase.auth().signOut(); break;
+    case 'logout': ls('bl_cache',null); await firebase.auth().signOut(); break;
     case 'ai': runAI(); break;
     case 'fs': toggleFs(); break;
     case 'reob': startOnboard(); break;
