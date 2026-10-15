@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 
 const env = process.env;
 const TEST = env.TEST_MODE === 'true';
-const APP_URL = 'https://leohuang0220.github.io/bulletjournal-web-app/guoguo/index.html#care';
+const APP_URL = 'https://leohuang0220.github.io/bulletjournal-web-app/guoguo/index.html?openExternalBrowser=1#care';
 
 if (!env.FIREBASE_SA) { console.error('缺少 FIREBASE_SA'); process.exit(1); }
 admin.initializeApp({ credential: admin.credential.cert(JSON.parse(env.FIREBASE_SA)) });

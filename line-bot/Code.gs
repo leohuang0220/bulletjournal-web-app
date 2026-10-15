@@ -15,7 +15,7 @@
  */
 const PROJECT = 'guoguo-diary';
 const FS = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents';
-const APP_URL = 'https://leohuang0220.github.io/bulletjournal-web-app/guoguo/index.html';
+const APP_URL = 'https://leohuang0220.github.io/bulletjournal-web-app/guoguo/index.html?openExternalBrowser=1';
 const TZ = 'Asia/Taipei';
 
 const CATS = {
