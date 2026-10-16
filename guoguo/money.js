@@ -201,10 +201,22 @@ async function gemini(parts,temp){
   if(!res.ok&&res.status!==429){const alt=await pickGeminiModel(key,model); if(alt&&alt!==model){model=alt;res=await call(model);j=await res.json()}}
   if(!res.ok) throw {code:res.status===429?'rate_limited':'api',message:j.error&&j.error.message};
   try{localStorage.setItem('gg_model',model)}catch(_){}
-  const txt=(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts.map(p=>p.text||'').join(''))||'';
-  return JSON.parse(txt.replace(/^```json|```$/g,'').trim());
+  const c=j.candidates&&j.candidates[0];
+  if(!c){ throw {code:'blocked',message:(j.promptFeedback&&j.promptFeedback.blockReason)||'沒有回覆'} }
+  const txt=((c.content&&c.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+  const a=txt.indexOf('{'), b=txt.lastIndexOf('}');
+  try{ return JSON.parse(a>=0&&b>a?txt.slice(a,b+1):txt) }
+  catch(_){ throw {code:'parse',message:c.finishReason||'格式錯誤',raw:txt.slice(0,200)} }
 }
-function gemErr(e){toast(e&&e.code==='nokey'?'請先到「設定」貼上 Gemini API 金鑰':e&&e.code==='rate_limited'?'用得太頻繁，稍後再試':e&&e.code==='api'?'Gemini 回覆錯誤：'+String(e.message||'').slice(0,50):'辨識失敗，請再試一次')}
+function gemErr(e){ console.warn('gemini',e); const c=e&&(e.code||e.message)||'', m=String(e&&e.message||'');
+  toast(c==='nokey'?'請先到「設定」貼上 Gemini API 金鑰'
+   :c==='rate_limited'?'Gemini 免費額度用得太頻繁，等 1 分鐘再試'
+   :c==='api'?'Gemini 回覆錯誤：'+m.slice(0,60)
+   :c==='blocked'?'Gemini 拒絕處理這張圖（'+m.slice(0,30)+'），請裁切後再試'
+   :c==='parse'?(m==='MAX_TOKENS'?'品項太多，AI 回覆被截斷，請分兩張截圖再試':'AI 回覆格式不完整（'+m.slice(0,20)+'），請再試一次')
+   :c==='decode'?'這張圖片格式讀不出來，請改用截圖或 JPG'
+   :/Failed to fetch|NetworkError|Load failed/i.test(m)?'網路連不上 Gemini，請確認網路後再試'
+   :'辨識失敗：'+String(c).slice(0,60)) }
 async function runMoneyAI(){
   const ym=S.mMonth, list=monthExp(ym), a=age(new Date(ym+'-15T12:00').getTime());
   const data={month:ym,babyAge:a?a.txt:'未填生日',feeding:S.baby.feedMode||'',budget:+S.mMeta.budget||null,total:total(list),byCategory:Object.fromEntries(Object.entries(sumBy(list)).map(([k,v])=>[MC[k].n,v])),
@@ -237,8 +249,9 @@ async function startScan(file){
   if(!gemKey()){toast('拍照辨識要用 Gemini，請先到「設定 → AI 設定」貼上金鑰');S.tab='set';render();return}
   scan={busy:true,items:[],msg:'辨識中，約 5–15 秒…'}; drawScan();
   try{
-    const blob=await shrink(file), data=await blobToData(blob);
-    const r=await gemini([{text:SCAN_PROMPT(todayYmd())},{inline_data:{mime_type:'image/jpeg',data:data.split(',')[1]}}]);
+    const blob=await shrink(file,2048), data=await blobToData(blob);
+    const parts=[{text:SCAN_PROMPT(todayYmd())},{inline_data:{mime_type:'image/jpeg',data:data.split(',')[1]}}];
+    let r; try{ r=await gemini(parts) }catch(e){ if(e&&e.code==='parse'){ scan.msg='第一次沒讀好，再試一次…'; drawScan(); r=await gemini(parts) } else throw e }
     if(!r||r.ok===false){scan={busy:false,items:[],msg:'看不出是發票或訂單：'+(r&&r.why||'請拍清楚一點再試')};drawScan();return}
     const d=/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')&&r.date<=todayYmd()?r.date:todayYmd();
     scan={busy:false,shop:String(r.shop||''),d,total:+r.total||0,items:(r.items||[]).filter(x=>x&&x.item).map(x=>({on:true,item:String(x.item).slice(0,60),amt:Math.round(+x.amt||0),qty:+x.qty||1,cat:MC[x.cat]?x.cat:guessCat(x.item)})),payer:myName()};
