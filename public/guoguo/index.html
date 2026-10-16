@@ -704,17 +704,17 @@ const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICT
 function photoSrc(p){if(p.startsWith('data:'))return p; if(PHOTOS[p])return PHOTOS[p]; loadPhoto(p); return BLANK}
 let _heic=null;
 function loadHeic(){ if(_heic) return _heic; _heic=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';sc.onload=()=>res(window.heic2any);sc.onerror=()=>{_heic=null;rej(new Error('heiclib'))};document.head.appendChild(sc)}); return _heic }
-async function shrink(file){
-  try{ return await shrinkRaw(file) }catch(e){
+async function shrink(file,max){
+  try{ return await shrinkRaw(file,max) }catch(e){
     if(!e||e.message!=='decode') throw e;
     // 多半是 HEIC/HEIF（OPPO、realme、三星、iPhone 的高效率格式），先轉成 JPEG 再壓
     const h2a=await loadHeic();
     let out; try{ out=await h2a({blob:file,toType:'image/jpeg',quality:.85}) }catch(_){ const er=new Error('decode'); er.ftype=file.type||file.name; throw er }
-    return await shrinkRaw(Array.isArray(out)?out[0]:out);
+    return await shrinkRaw(Array.isArray(out)?out[0]:out,max);
   }
 }
-async function shrinkRaw(file){
-  const max=1280; let src=null, w=0, h=0, url=null;
+async function shrinkRaw(file,max){
+  max=max||1280; let src=null, w=0, h=0, url=null;
   // 先用瀏覽器內建縮小解碼（大像素手機照片不會爆記憶體），失敗再退回 <img>
   try{
     const probe=await createImageBitmap(file); w=probe.width; h=probe.height; probe.close&&probe.close();
