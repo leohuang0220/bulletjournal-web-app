@@ -784,7 +784,7 @@ function stats(list,day){
   const br=of('breast'); st.breast={n:br.length,L:br.reduce((s,l)=>s+(l.left||0),0),R:br.reduce((s,l)=>s+(l.right||0),0)};
   st.bmilk={n:of('bmilk').length,ml:of('bmilk').reduce((s,l)=>s+(l.ml||0),0)};
   st.formula={n:of('formula').length,ml:of('formula').reduce((s,l)=>s+(l.ml||0),0)};
-  st.pump={n:of('pump').length,ml:of('pump').reduce((s,l)=>s+(l.left||0)+(l.right||0),0)};
+  st.pump={n:of('pump').length,ml:of('pump').reduce((s,l)=>s+(l.left||0)+(l.right||0),0),L:of('pump').reduce((s,l)=>s+(l.left||0),0),R:of('pump').reduce((s,l)=>s+(l.right||0),0)};
   st.pee={n:of('pee').length}; st.poop={n:of('poop').length};
   st.sleep=list.filter(l=>l.type==='sleep').reduce((s,l)=>s+Math.max(0,Math.min(l.end||Date.now(),e)-Math.max(l.t,day)),0);
   const tp=of('temp'); st.temp=tp.length?tp.reduce((a,b)=>a.t>b.t?a:b).c:null;
@@ -905,7 +905,7 @@ function viewSum(){
    `<div class="wrap"><div class="wkhead"><button data-act="wprev" aria-label="前一週">${ic('left')}</button>
     <div class="num">${dateShort(a)} ～ ${dateShort(b-DAY)}</div>
     <button data-act="wnext" aria-label="後一週" ${b>Date.now()?'disabled':''}>${ic('right')}</button></div>
-    <div class="seg" role="group"><button data-sum="rhythm" aria-pressed="${S.sumMode==='rhythm'}">作息</button><button data-sum="ml" aria-pressed="${S.sumMode==='ml'}">奶量</button><button data-sum="breast" aria-pressed="${S.sumMode==='breast'}">親餵</button><button data-sum="diaper" aria-pressed="${S.sumMode==='diaper'}">尿布</button><button data-sum="sleep" aria-pressed="${S.sumMode==='sleep'}">睡眠</button></div>
+    <div class="seg" role="group"><button data-sum="rhythm" aria-pressed="${S.sumMode==='rhythm'}">作息</button><button data-sum="ml" aria-pressed="${S.sumMode==='ml'}">奶量</button><button data-sum="pump" aria-pressed="${S.sumMode==='pump'}">擠奶</button><button data-sum="breast" aria-pressed="${S.sumMode==='breast'}">親餵</button><button data-sum="diaper" aria-pressed="${S.sumMode==='diaper'}">尿布</button><button data-sum="sleep" aria-pressed="${S.sumMode==='sleep'}">睡眠</button></div>
     <div id="sumchart">${sumChart()}</div>${aiCard()}</div>`;
 }
 function dateShort(t){const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()}`}
@@ -935,6 +935,7 @@ function sumChart(){
   const W=340,H=230,L=34,R=8,T=26,B=30,cw=(W-L-R)/7, bw=Math.min(28,cw*.56);
   let series, unit, fmt=v=>v;
   if(S.sumMode==='ml'){series=[['bmilk',d=>d.st.bmilk.ml],['formula',d=>d.st.formula.ml]];unit='ml'}
+  else if(S.sumMode==='pump'){series=[['pump',d=>d.st.pump.ml]];unit='ml'}
   else if(S.sumMode==='breast'){series=[['breast',d=>Math.round((d.st.breast.L+d.st.breast.R)/60)]];unit='分鐘'}
   else if(S.sumMode==='diaper'){series=[['pee',d=>d.st.pee.n],['poop',d=>d.st.poop.n]];unit='次'}
   else {series=[['sleep',d=>+(d.st.sleep/36e5).toFixed(1)]];unit='小時'}
@@ -957,11 +958,20 @@ function sumChart(){
   const legend=series.map(([t])=>`<span><i style="background:${cvar(t)}"></i>${TYPES[t].n}</span>`).join('');
   const past=days.filter(d=>d.d<=today), n=Math.max(1,past.filter((d)=>d.d<today||true).length);
   const avgTot=past.reduce((s,d,i)=>s+tot[days.indexOf(d)],0)/Math.max(1,past.length);
-  const feedN=past.reduce((s,d)=>s+d.st.breast.n+d.st.bmilk.n+d.st.formula.n,0)/Math.max(1,past.length);
+  const feedN=past.reduce((s,d)=>s+(S.sumMode==='pump'?d.st.pump.n:d.st.breast.n+d.st.bmilk.n+d.st.formula.n),0)/Math.max(1,past.length);
   const sl=past.reduce((s,d)=>s+d.st.sleep,0)/Math.max(1,past.length);
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="每日${unit}統計">${g}</svg><div class="legend">${legend}</div></div>
-   <div class="avg"><div><b class="num">${+avgTot.toFixed(1)}</b><small>日均（${unit}）</small></div><div><b class="num">${feedN.toFixed(1)}</b><small>日均餵奶次數</small></div><div><b class="num">${durShort(sl)}</b><small>日均睡眠</small></div></div>
-   ${S.sumMode==='ml'?mlTable(past):''}`;
+   <div class="avg"><div><b class="num">${+avgTot.toFixed(1)}</b><small>日均（${unit}）</small></div><div><b class="num">${feedN.toFixed(1)}</b><small>${S.sumMode==='pump'?'日均擠奶次數':'日均餵奶次數'}</small></div><div><b class="num">${durShort(sl)}</b><small>日均睡眠</small></div></div>
+   ${S.sumMode==='ml'?mlTable(past):S.sumMode==='pump'?pumpTable(past):''}`;
+}
+function pumpTable(past){
+  const today=startOfDay(Date.now()), rows=past.slice().reverse(), sum=k=>rows.reduce((s,d)=>s+d.st.pump[k],0);
+  return `<div class="sect"><h2>每日總擠奶量</h2><span>點一天看明細</span></div>
+   <ul class="gl mlt"><li class="h"><span>日期</span><span>總擠奶量</span><span>左</span><span>右</span><span>次數</span></li>
+   ${rows.map(d=>{const dd=new Date(d.d), p=d.st.pump;
+     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${p.ml}</b> ml</span><span>${p.L}</span><span>${p.R}</span><span>${p.n} 次${p.n?`<small>每次約 ${Math.round(p.ml/p.n)}</small>`:''}</span></li>`}).join('')}
+   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum('ml')}</b> ml</span><span>${sum('L')}</span><span>${sum('R')}</span><span>${sum('n')} 次</span></li></ul>
+   <p class="hint">以每天 0:00–24:00 計算。擠出來的奶拿去瓶餵時，請另外記「瓶餵母乳」，才會算進總奶量。</p>`;
 }
 function mlTable(past){
   const today=startOfDay(Date.now()), rows=past.slice().reverse();
