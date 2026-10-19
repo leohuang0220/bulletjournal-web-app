@@ -414,6 +414,53 @@ select.field{appearance:auto;padding:9px 8px}
   .app>*{max-width:960px}
   .alb{grid-template-columns:repeat(5,1fr)}
 }
+
+/* ── 風格 v2：白天「嬰兒房」＋ 夜間「夜燈」 ──
+   白天：淡霧粉底、白卡、深梅色字；粉紅只留給動作與重點。
+   夜間：晚上 8 點到早上 7 點自動切換，深紫藍底、暖粉字，半夜餵奶不刺眼。
+   記錄類型圖示：清單與數字卡改成淡色底＋彩色圖示，只有快速記錄按鈕保持實心，好按好找。 */
+:root{
+  --bg:#FBF6F8; --surface:#FFFFFF; --ink:#3F3550; --muted:#8E849B; --line:#EFE4EA; --band:#F5EDF1;
+  --primary:#E9718C; --primary-deep:#C9536F; --primary-soft:#FBE4EA;
+  --shadow:0 1px 2px rgba(63,53,80,.05),0 6px 18px rgba(63,53,80,.05);
+  --tint:16%; --tint-ink:72%;
+}
+:root[data-theme="night"]{
+  color-scheme:dark;
+  --bg:#17151F; --surface:#221F2D; --ink:#ECE6F1; --muted:#9F97AD; --line:#353042; --band:#2C2839;
+  --primary:#CF6680; --primary-deep:#F5AFBF; --primary-soft:#3B2A36; --on-primary:#FFFFFF;
+  --warn:#FF7B80; --ok:#5CCBA4;
+  --shadow:0 0 0 1px rgba(255,255,255,.03);
+  --tint:24%; --tint-ink:100%;
+}
+body{transition:background-color .3s}
+/* 頂欄：不再是整片粉紅，寶寶臉＋大大的「第幾天」 */
+.hd{background:transparent;color:var(--ink);padding:16px 16px 6px;border-radius:0;overflow:visible}
+.hd::after{display:none}
+.avatar{width:52px;height:52px;background:var(--surface);box-shadow:0 0 0 3px var(--primary-soft)}
+.who b{font-size:22px;letter-spacing:.02em}
+.who span{color:var(--muted);opacity:1;font-size:13px}
+.daypill{color:var(--muted);font-size:11.5px;opacity:1;line-height:1.15}
+.daypill b{font-family:"Fredoka",var(--f);font-size:34px;font-weight:600;color:var(--primary-deep);letter-spacing:-.01em}
+.fsb{background:var(--surface);color:var(--muted);box-shadow:var(--shadow)}
+.datenav{background:var(--surface);border-radius:999px;padding:5px;margin-top:14px;box-shadow:var(--shadow)}
+.datenav button{background:var(--band);color:var(--ink);width:34px;height:34px}
+.datenav .d{font-family:"Huninn",var(--f);font-size:16px}
+.datenav .d small{color:var(--muted);opacity:1}
+/* 淡色圖示 */
+.badge,.chip .ic,.mb{background:color-mix(in srgb,var(--c) var(--tint),var(--surface));color:color-mix(in srgb,var(--c) var(--tint-ink),var(--ink))}
+.qa .badge,.side.on{background:var(--c);color:#fff}
+:root[data-theme="night"] .qa .badge{background:color-mix(in srgb,var(--c) 78%,#000)}
+.chip{box-shadow:var(--shadow)}
+.chip b{font-family:"Fredoka",var(--f);font-size:17px}
+.tl li .tm{color:var(--muted)}
+/* 夜間細節 */
+:root[data-theme="night"] .runbar button{background:var(--ink);color:var(--surface)}
+:root[data-theme="night"] .tabs{background:var(--surface)}
+:root[data-theme="night"] .tray-card{box-shadow:0 -6px 24px rgba(0,0,0,.35)}
+:root[data-theme="night"] .scrim{background:rgba(0,0,0,.55)}
+:root[data-theme="night"] img.face{filter:brightness(.88)}
+.theme-pills .pill small{display:block;font-size:10.5px;opacity:.8}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -791,6 +838,14 @@ function stats(list,day){
 }
 
 /* ───────── render: shell ───────── */
+function themeMode(){ return ls('gg_theme')||'auto' }
+function applyTheme(){
+  const m=themeMode(), h=new Date().getHours();
+  const night=m==='night'||(m==='auto'&&(h>=20||h<7||(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)));
+  document.documentElement.dataset.theme=night?'night':'day';
+  const tc=document.querySelector('meta[name="theme-color"]'); if(tc) tc.content=night?'#17151F':'#FBF6F8';
+}
+applyTheme(); setInterval(applyTheme,5*60*1000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) applyTheme() });
 function render(){
   if(S.tab==='album') S.tab='log';
   renderTabs(); renderTray();
@@ -1051,6 +1106,9 @@ function viewSet(){
    ${familyCard()}
    ${lineCard()}
    ${Object.values(S.care.ov||{}).some(o=>o.hide)?`<div class="card"><span class="lbl">疫苗與健檢</span><p class="hint" style="margin:0 0 8px">有 ${Object.values(S.care.ov).filter(o=>o.hide).length} 個預設項目被隱藏。</p><button class="mini" data-act="cunhide">恢復隱藏項目</button></div>`:''}
+   <div class="sect"><h2>外觀</h2></div>
+   <div class="card"><div class="pills theme-pills">${[['auto','自動','晚上 8 點後變暗'],['day','白天'],['night','夜間']].map(([k,n,t])=>`<button class="pill" data-theme-set="${k}" aria-pressed="${themeMode()===k}">${n}${t?`<small>${t}</small>`:''}</button>`).join('')}</div>
+   <p class="hint">夜間模式用深色底與暖色字，半夜餵奶時比較不刺眼。只影響這支手機。</p></div>
    <div class="sect"><h2>使用說明</h2></div>
    <div class="btnline"><button class="btn2" data-act="reob">重新看功能介紹與基本資料設定</button>${fsOk()?`<button class="btn2" data-act="fs">${document.fullscreenElement?'離開全螢幕':'全螢幕模式'}</button>`:''}</div>
    <div class="sect"><h2>AI 設定</h2></div>
@@ -1670,6 +1728,7 @@ document.addEventListener('click',async e=>{
   const ss=e.target.closest('[data-sset]'); if(ss){S.baby[ss.dataset.sset]=ss.dataset.v;document.querySelectorAll(`[data-sset="${ss.dataset.sset}"]`).forEach(b=>b.setAttribute('aria-pressed',b===ss));return}
   const cvb=e.target.closest('[data-cv]'); if(cvb){S.careView=cvb.dataset.cv;render();return}
   const crm=e.target.closest('[data-crem]'); if(crm&&ccur){syncCare();ccur.remind=+crm.dataset.crem;drawCare();return}
+  const ths=e.target.closest('[data-theme-set]'); if(ths){ls('gg_theme',ths.dataset.themeSet);applyTheme();render();return}
   const af=e.target.closest('[data-af]'); if(af){S.albumFilter=af.dataset.af;render();return}
   const msb=e.target.closest('[data-ms]'); if(msb&&mcur){syncMoment();const on=!(mcur.ms&&mcur.title===msb.dataset.ms);mcur.ms=on;mcur.title=on?msb.dataset.ms:'';drawMoment();return}
   const a=e.target.closest('[data-act]'); if(!a) return;
