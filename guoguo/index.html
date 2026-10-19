@@ -212,7 +212,7 @@ button{cursor:pointer;border:0;background:none}
 .btnline{display:flex;gap:8px;flex-wrap:wrap}
 .btn2{border-radius:999px;padding:10px 16px;background:var(--surface);border:1.5px solid var(--line);font-size:14px}
 .note{font-size:12.5px;color:var(--muted);line-height:1.7}
-.tabs-in{grid-template-columns:repeat(6,1fr)}
+.tabs-in{grid-template-columns:repeat(5,1fr)}
 /* what's next + last cards */
 .next{margin-top:14px;background:var(--surface);border-radius:var(--r);padding:12px 14px 10px;box-shadow:var(--shadow)}
 .next h3{margin:0 0 8px;font-family:"Huninn",var(--f);font-weight:400;font-size:15px;color:var(--primary-deep);display:flex;justify-content:space-between;align-items:baseline}
@@ -622,7 +622,6 @@ function attachFamily(ref,fromCache){
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
-  subs.push(db.collection('moments').orderBy('t','desc').limit(500).onSnapshot(snap=>{S.moments=snap.docs.map(d=>({id:d.id,...d.data()}));if(!document.querySelector('.scrim'))render()},fsErr));
   moneyAttach();
   assetsCap={
     async upload(blob){ const d=await blobToData(blob); const r=famRef.collection('photos').doc(); await r.set({d,t:Date.now()}); PHOTOS[r.id]=d; return {id:r.id} },
@@ -793,18 +792,18 @@ function stats(list,day){
 
 /* ───────── render: shell ───────── */
 function render(){
+  if(S.tab==='album') S.tab='log';
   renderTabs(); renderTray();
   const app=document.getElementById('app');
   app.classList.toggle('notrack', S.tab!=='log');
   if(S.tab==='log') app.innerHTML=viewLog();
   else if(S.tab==='sum') app.innerHTML=viewSum();
   else if(S.tab==='grow') app.innerHTML=viewGrow();
-  else if(S.tab==='album') app.innerHTML=viewAlbum();
   else if(S.tab==='money') app.innerHTML=viewMoney();
   else app.innerHTML=viewSet();
 }
 function renderTabs(){
-  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['money','花費','coin'],['album','相簿','album'],['set','設定','gear']];
+  const t=[['log','記錄','pen'],['sum','摘要','bars'],['grow','成長','trend'],['money','花費','coin'],['set','設定','gear']];
   document.getElementById('tabs').innerHTML=t.map(([k,n,i])=>`<button class="tab" role="tab" aria-selected="${S.tab===k}" data-tab="${k}">${ic(i)}${n}</button>`).join('');
 }
 function header(sub){
@@ -895,7 +894,7 @@ function ribbon(list){
   });
   if(S.day===startOfDay(Date.now())){const x=sc(Date.now());g+=`<line x1="${x}" x2="${x}" y1="4" y2="64" stroke="var(--primary)" stroke-width="1.6" stroke-dasharray="3 2"/>`}
   return `<div class="ribbon" aria-label="24小時作息圖"><svg viewBox="0 0 ${W} 78" role="img">${g}</svg>
-   <div class="lg"><span><i style="background:var(--c-breast)"></i>母乳</span><span><i style="background:var(--c-bmilk)"></i>瓶餵母乳</span><span><i style="background:var(--c-formula)"></i>配方奶</span><span><i style="background:var(--c-pee)"></i>尿</span><span><i style="background:var(--c-poop)"></i>便</span><span><i style="background:var(--c-sleep)"></i>睡</span></div></div>`;
+   <div class="lg"><span><i style="background:var(--c-bmilk)"></i>瓶餵母乳</span><span><i style="background:var(--c-formula)"></i>配方奶</span><span><i style="background:var(--c-pump)"></i>擠奶</span><span><i style="background:var(--c-pee)"></i>尿</span><span><i style="background:var(--c-poop)"></i>便</span><span><i style="background:var(--c-sleep)"></i>睡</span></div></div>`;
 }
 
 /* ───────── view: summary ───────── */
