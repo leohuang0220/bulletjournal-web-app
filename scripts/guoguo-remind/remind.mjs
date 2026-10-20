@@ -2,6 +2,7 @@
 // 資料來源：families/{fid}/meta/remind（由 App 自動寫入）。
 import admin from 'firebase-admin';
 import nodemailer from 'nodemailer';
+import webpush from 'web-push';
 
 const env = process.env;
 const TEST = env.TEST_MODE === 'true';
@@ -55,12 +56,62 @@ async function monthReport(famRef, name) {
   return { label, text };
 }
 
+// ── 每日摘要推播（Web Push）：金鑰存在 Firestore server/vapid（App 讀不到），公鑰發到各家 meta/push ──
+const ONLY_PUSH = env.ONLY_PUSH === 'true';
+async function vapidKeys() {
+  const ref = db.collection('server').doc('vapid'), s = await ref.get();
+  if (s.exists) return s.data();
+  const k = webpush.generateVAPIDKeys(); await ref.set({ ...k, created: Date.now() }); console.log('已產生推播金鑰'); return k;
+}
+const V = await vapidKeys();
+webpush.setVapidDetails('mailto:' + (env.GMAIL_USER || 'guoguo.diary@gmail.com'), V.publicKey, V.privateKey);
+const H = 3600e3, D = 24 * H;
+const dur = ms => { const m = Math.round(ms / 6e4); return m >= 60 ? `${Math.floor(m / 60)}小時${m % 60 ? (m % 60) + '分' : ''}` : `${m}分`; };
+async function daySummary(famRef, name) {
+  const t0 = Date.parse(twToday() + 'T00:00:00+08:00') - D, t1 = t0 + D;   // 台灣時間「昨天」
+  const logs = (await famRef.collection('logs').where('t', '>=', t0 - D).where('t', '<', t1).get()).docs.map(d => d.data());
+  const inD = logs.filter(l => l.t >= t0 && l.t < t1), of = t => inD.filter(l => l.type === t);
+  const sum = (a, f) => a.reduce((s, l) => s + (+f(l) || 0), 0);
+  const bm = sum(of('bmilk'), l => l.ml), fm = sum(of('formula'), l => l.ml), bottles = of('bmilk').length + of('formula').length;
+  const pump = sum(of('pump'), l => (l.left || 0) + (l.right || 0)), pumpN = of('pump').length;
+  const pee = of('pee').length, poop = of('poop').length, breast = of('breast').length;
+  const sleep = logs.filter(l => l.type === 'sleep').reduce((s, l) => s + Math.max(0, Math.min(l.end || t1, t1) - Math.max(l.t, t0)), 0);
+  if (!inD.length && !sleep) return null;
+  const md = new Date(t0 + 8 * H), label = `${md.getUTCMonth() + 1}/${md.getUTCDate()}`;
+  const lines = [
+    `🍼 奶量 ${bm + fm} ml（瓶餵母乳 ${bm}・配方 ${fm}，${bottles} 次${breast ? `，親餵 ${breast} 次` : ''}）`,
+    pumpN ? `🤱 擠奶 ${pump} ml（${pumpN} 次）` : null,
+    `🧷 尿布 ${pee + poop} 次（尿 ${pee}・便 ${poop}）`,
+    sleep ? `😴 睡眠 ${dur(sleep)}` : null,
+    of('sick').length ? `🤒 不舒服 ${of('sick').length} 筆` : null,
+  ].filter(Boolean);
+  return { title: `${name} 昨天（${label}）摘要`, body: lines.join('\n'), short: `奶量 ${bm + fm}ml・擠奶 ${pump}ml・尿布 ${pee + poop}・睡 ${dur(sleep)}` };
+}
+async function pushSummary(f, name) {
+  await f.ref.collection('meta').doc('push').set({ publicKey: V.publicKey }, { merge: true });
+  const subs = await f.ref.collection('push').get();
+  if (subs.empty) return 'no-subs';
+  const sm = await daySummary(f.ref, name);
+  const msg = sm || { title: `${name} 昨天沒有記錄`, body: '記得在果果日記記下餵奶、尿布和睡眠，明天就會收到摘要。' };
+  const payload = JSON.stringify({ title: msg.title, body: msg.body, tag: 'gg-daily', url: './index.html#sum' });
+  let ok = 0, gone = 0;
+  for (const d of subs.docs) {
+    try { await webpush.sendNotification(d.data().sub, payload, { TTL: 12 * 3600 }); ok++; }
+    catch (e) { if (e.statusCode === 404 || e.statusCode === 410) { await d.ref.delete(); gone++; } else console.error('推播失敗', e.statusCode, e.body || e.message); }
+  }
+  await f.ref.collection('meta').doc('push').set({ lastSummary: { t: Date.now(), ok, gone, text: msg.title } }, { merge: true });
+  return `sent ${ok}${gone ? `, removed ${gone}` : ''}`;
+}
+
 const today = twToday();
 const fams = await db.collection('families').get();
 let lineParts = [];
 for (const f of fams.docs) {
   const fam = f.data();
   const rs = await f.ref.collection('meta').doc('remind').get();
+  const baby = (await f.ref.collection('meta').doc('baby').get()).data() || {};
+  try { console.log(f.id, '每日摘要推播:', await pushSummary(f, baby.name || (rs.exists && rs.data().name) || '寶寶')); } catch (e) { console.error(f.id, '推播錯誤', e.message); }
+  if (ONLY_PUSH) continue;
   if (!rs.exists) { console.log(f.id, '沒有提醒資料（請打開一次 App）'); continue; }
   const { name = '寶寶', items = [] } = rs.data();
   const due = items.map(x => ({ ...x, left: diff(x.date, today) }))

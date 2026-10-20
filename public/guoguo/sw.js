@@ -1,5 +1,5 @@
 // 果果日記離線快取：頁面與圖示先存；資料由 Firebase 自己離線同步
-const CACHE = 'guoguo-v24';
+const CACHE = 'guoguo-v25';
 const CORE = ['./', './index.html', './config.js', './money.js', './app.webmanifest', './icons/b-icon-192.png', './icons/b-icon-512.png', './icons/b-apple-touch-icon.png', './icons/face.jpg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -40,6 +40,11 @@ async function checkRem(){
   await c.put('./__remlog.json',new Response(JSON.stringify(log)));
 }
 self.addEventListener('periodicsync',e=>{ if(e.tag==='gg-remind') e.waitUntil(checkRem()) });
+// 每日摘要推播（由 GitHub Actions 每天早上送出）
+self.addEventListener('push',e=>{
+  let d={}; try{ d=e.data?e.data.json():{} }catch(_){ d={body:e.data&&e.data.text()} }
+  e.waitUntil(self.registration.showNotification(d.title||'果果日記',{body:d.body||'',tag:d.tag||'gg-daily',icon:'icons/b-icon-192.png',badge:'icons/b-icon-192.png',data:{url:d.url||'./index.html'}}));
+});
 self.addEventListener('notificationclick',e=>{
   e.notification.close(); const url=new URL((e.notification.data&&e.notification.data.url)||'./index.html#care',self.registration.scope).href;
   e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(ws=>{ for(const w of ws){ if('focus' in w){ w.navigate&&w.navigate(url).catch(()=>{}); return w.focus() } } return clients.openWindow(url) }));

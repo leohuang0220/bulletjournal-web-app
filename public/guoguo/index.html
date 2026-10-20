@@ -665,6 +665,7 @@ function attachFamily(ref,fromCache){
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); saveCache(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
+  subs.push(db.doc('meta/push').onSnapshot(s=>{ S.pushKey=s.exists?s.data().publicKey:''; S.pushLast=s.exists?s.data().lastSummary:null; if(S.tab==='set'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
@@ -1105,6 +1106,7 @@ function viewSet(){
    <div class="card"><label class="lbl" for="s-iv">餵奶間隔提醒（小時，0 = 不顯示）</label><input class="field" id="s-iv" type="number" inputmode="decimal" min="0" max="8" step="0.5" value="${S.baby.interval??3}"><p class="hint">首頁會顯示「預計下次餵奶」時間，超過時標成紅色。</p></div>
    <button class="addbtn" data-act="saveset">${ic('check')}儲存設定</button>
    ${familyCard()}
+   ${pushCard()}
    ${lineCard()}
    ${Object.values(S.care.ov||{}).some(o=>o.hide)?`<div class="card"><span class="lbl">疫苗與健檢</span><p class="hint" style="margin:0 0 8px">有 ${Object.values(S.care.ov).filter(o=>o.hide).length} 個預設項目被隱藏。</p><button class="mini" data-act="cunhide">恢復隱藏項目</button></div>`:''}
    <div class="sect"><h2>外觀</h2></div>
@@ -1478,6 +1480,38 @@ async function notifyDue(){
   }
   try{ const c=await caches.open('guoguo-rem'); await c.put('./__remlog.json',new Response(JSON.stringify(log))) }catch(e){}
 }
+/* ───── 每日摘要推播（Web Push，App 關著也會收到） ───── */
+function pushOk(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window }
+function pushOn(){ return !!ls('gg_push_id') && ('Notification' in window) && Notification.permission==='granted' }
+function b64u(k){ const p='='.repeat((4-k.length%4)%4), b=atob((k+p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(b,c=>c.charCodeAt(0)) }
+function pushCard(){
+  if(S.mode!=='db') return '';
+  const ios=/iPhone|iPad/.test(navigator.userAgent), standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  let body;
+  if(!pushOk()) body=`<p class="hint" style="margin:0">${ios&&!standalone?'iPhone 要先用 Safari「分享 → 加入主畫面」，再從主畫面的果果日記打開，才能開啟推播（需 iOS 16.4 以上）。':'這個瀏覽器不支援推播通知，請改用 Chrome 或主畫面的 App。'}</p>`;
+  else if(!S.pushKey) body=`<p class="hint" style="margin:0">推播服務正在準備中，請稍後再回來這裡開啟。</p>`;
+  else if(pushOn()) body=`<p class="hint" style="margin:0 0 8px">這支手機已開啟。每天早上約 9 點會收到「昨天」的摘要：奶量、擠奶量、尿布、睡眠。</p><button class="mini" style="background:var(--band);color:var(--ink)" data-act="pushoff">關閉這支手機的推播</button>`;
+  else body=`<p class="hint" style="margin:0 0 8px">每天早上約 9 點推送昨天的奶量、擠奶量、尿布和睡眠，App 關著也收得到。每支手機要各自開啟一次。</p><button class="mini" data-act="pushon">在這支手機開啟</button>`;
+  return `<div class="card notif">${ic('bell')}<div style="flex:1"><b>每日摘要推播</b>${body}</div></div>`;
+}
+async function pushEnable(){
+  try{
+    const p=await Notification.requestPermission(); if(p!=='granted'){toast('沒有允許通知，請到手機設定打開');return}
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(S.pushKey)});
+    const j=sub.toJSON(), id=btoa(j.endpoint).replace(/[^A-Za-z0-9]/g,'').slice(-40);
+    await famRef.collection('push').doc(id).set({sub:j,by:S.uid||null,name:(S.names&&S.names[S.uid])||'',ua:navigator.userAgent.slice(0,120),t:Date.now()});
+    ls('gg_push_id',id); toast('已開啟，明天早上會收到第一則摘要');
+  }catch(e){ console.warn(e); toast('開啟失敗：'+String(e&&(e.message||e.code)||e).slice(0,60)) }
+  render();
+}
+async function pushDisable(){
+  const id=ls('gg_push_id');
+  try{ const reg=await navigator.serviceWorker.ready; const sub=await reg.pushManager.getSubscription(); if(sub) await sub.unsubscribe() }catch(e){}
+  try{ if(id&&famRef) await famRef.collection('push').doc(id).delete() }catch(e){}
+  ls('gg_push_id',null); toast('已關閉這支手機的推播'); render();
+}
 async function enableNotify(){
   if(!('Notification' in window)){toast('這個瀏覽器不支援通知');return}
   const p=await Notification.requestPermission();
@@ -1737,6 +1771,8 @@ document.addEventListener('click',async e=>{
   if((act==='close'||act==='gclose'||act==='mclose'||act==='cclose') && e.target!==a && a.classList.contains('scrim')) return;
   switch(act){
     case 'goday': S.day=+a.dataset.d; S.tab='log'; render(); window.scrollTo(0,0); break;
+    case 'pushon': pushEnable(); break;
+    case 'pushoff': pushDisable(); break;
     case 'gocare': S.tab='grow'; S.careView='care'; render(); window.scrollTo(0,0); break;
     case 'cedit': openCare(a.dataset.id); break;
     case 'cdone': e.stopPropagation(); await careToggle(a.dataset.id); break;
