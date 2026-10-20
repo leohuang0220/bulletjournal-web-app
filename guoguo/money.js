@@ -196,11 +196,7 @@ function gemKey(){return (S.fam&&S.fam.geminiKey)||ls('bl_gemini')||''}
 async function gemini(parts,temp){
   const key=gemKey(); if(!key) throw {code:'nokey'};
   const body=JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',temperature:temp??.2}});
-  const call=m=>fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body});
-  let model=(S.fam&&S.fam.geminiModel)||lsGet('gg_model')||'gemini-flash-latest', res=await call(model), j=await res.json();
-  if(!res.ok&&res.status!==429){const alt=await pickGeminiModel(key,model); if(alt&&alt!==model){model=alt;res=await call(model);j=await res.json()}}
-  if(!res.ok) throw {code:res.status===429?'rate_limited':'api',message:j.error&&j.error.message};
-  try{localStorage.setItem('gg_model',model)}catch(_){}
+  const j=await gemCall(key,body);
   const c=j.candidates&&j.candidates[0];
   if(!c){ throw {code:'blocked',message:(j.promptFeedback&&j.promptFeedback.blockReason)||'沒有回覆'} }
   const txt=((c.content&&c.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
@@ -210,6 +206,7 @@ async function gemini(parts,temp){
 }
 function gemErr(e){ console.warn('gemini',e); const c=e&&(e.code||e.message)||'', m=String(e&&e.message||'');
   toast(c==='nokey'?'請先到「設定」貼上 Gemini API 金鑰'
+   :c==='busy'?'Gemini 現在太多人用，已自動重試仍失敗，請 1–2 分鐘後再試'
    :c==='rate_limited'?'Gemini 免費額度用得太頻繁，等 1 分鐘再試'
    :c==='api'?'Gemini 回覆錯誤：'+m.slice(0,60)
    :c==='blocked'?'Gemini 拒絕處理這張圖（'+m.slice(0,30)+'），請裁切後再試'

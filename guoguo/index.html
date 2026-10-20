@@ -1156,6 +1156,23 @@ function aiPayload(){
     last7days:days, growth, previousAnalysis:prev?{date:dateShort(prev.t),watch:prev.r?.watch,track:prev.r?.track}:null};
 }
 function lsGet(k){try{return localStorage.getItem(k)}catch(_){return null}}
+/* Gemini 共用呼叫：忙線（503／500／過載）自動重試兩次，再換其他模型；成功的備援模型不會記成預設 */
+const GEM_BUSY=x=>x.r.status===503||x.r.status===500||x.r.status===504||(x.r.status===429&&/overload|high demand|try again later/i.test((x.j.error&&x.j.error.message)||''));
+async function gemCall(key,body){
+  const call=m=>fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body})
+    .then(async r=>({r,j:await r.json().catch(()=>({}))}));
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  let model=(S.fam&&S.fam.geminiModel)||lsGet('gg_model')||'gemini-flash-latest', x=await call(model);
+  for(let i=0;i<2&&GEM_BUSY(x);i++){ await wait(2000*(i+1)); x=await call(model) }
+  let fallback=false;
+  if(!x.r.ok&&(GEM_BUSY(x)||x.r.status!==429)){
+    const alts=[await pickGeminiModel(key,model),'gemini-2.5-flash','gemini-flash-lite-latest','gemini-2.5-flash-lite'].filter((m,i,a)=>m&&m!==model&&a.indexOf(m)===i);
+    for(const m of alts){ const y=await call(m); if(y.r.ok){ fallback=GEM_BUSY(x); x=y; model=m; break } if(!GEM_BUSY(y)&&y.r.status!==404&&y.r.status!==400){ x=y; break } }
+  }
+  if(!x.r.ok) throw {code:GEM_BUSY(x)?'busy':x.r.status===429?'rate_limited':'api',message:x.j.error&&x.j.error.message};
+  if(!/lite/.test(model)&&!fallback){ try{localStorage.setItem('gg_model',model)}catch(_){} }
+  return x.j;
+}
 async function pickGeminiModel(key, bad){
   try{
     const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key)); const j=await r.json();
@@ -1185,24 +1202,15 @@ async function runAI(){
 ${JSON.stringify(aiPayload())}`;
   try{
     const body=JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.4}});
-    const call=m=>fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body});
-    let model=(S.fam&&S.fam.geminiModel)||lsGet('gg_model')||'gemini-flash-latest';
-    let res=await call(model), j=await res.json();
-    if(!res.ok && res.status!==429){
-      // 模型被下架或名稱不對：向 Google 查目前可用的 Flash 模型，自動換新再試一次
-      const alt=await pickGeminiModel(key, model);
-      if(alt && alt!==model){ model=alt; res=await call(model); j=await res.json(); }
-    }
-    if(!res.ok) throw {code:res.status===429?'rate_limited':'api',message:j.error&&j.error.message};
-    try{localStorage.setItem('gg_model',model)}catch(_){}
-    const txt=(j.candidates&&j.candidates[0]&&j.candidates[0].content.parts.map(p=>p.text||'').join(''))||'';
-    const r=JSON.parse(txt.replace(/^```json|```$/g,'').trim());
+    const j=await gemCall(key,body);
+    const txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+    const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); const r=JSON.parse(a>=0&&b>a?txt.slice(a,b+1):txt);
     if(!r||typeof r!=='object'||!r.summary) throw {code:'bad'};
     const rec={t:Date.now(),r:{summary:String(r.summary),good:arr(r.good),watch:arr(r.watch),tips:arr(r.tips),doctor:arr(r.doctor),track:arr(r.track)}};
     if(S.mode==='db'){ try{await db.collection('insights').add({...rec,by:S.uid||null})}catch(e){S.insights=[rec,...(S.insights||[])]} }
     else {S.insights=[rec,...(S.insights||[])]; ls('bl_insights',S.insights)}
   }catch(e){
-    if(e&&e.code==='rate_limited') toast('用得太頻繁，稍後再試'); else if(e&&e.code==='api') toast('Gemini 回覆錯誤：'+(e.message||'').slice(0,60)); else toast('分析失敗，請再試一次');
+    if(e&&e.code==='busy') toast('Gemini 現在太多人用，已自動重試仍失敗，請 1–2 分鐘後再試'); else if(e&&e.code==='rate_limited') toast('用得太頻繁，稍後再試'); else if(e&&e.code==='api') toast('Gemini 回覆錯誤：'+(e.message||'').slice(0,60)); else toast('分析失敗，請再試一次');
   }
   S.aiBusy=false; render();
 }
@@ -1490,7 +1498,7 @@ function pushCard(){
   let body;
   if(!pushOk()) body=`<p class="hint" style="margin:0">${ios&&!standalone?'iPhone 要先用 Safari「分享 → 加入主畫面」，再從主畫面的果果日記打開，才能開啟推播（需 iOS 16.4 以上）。':'這個瀏覽器不支援推播通知，請改用 Chrome 或主畫面的 App。'}</p>`;
   else if(!S.pushKey) body=`<p class="hint" style="margin:0">推播服務正在準備中，請稍後再回來這裡開啟。</p>`;
-  else if(pushOn()) body=`<p class="hint" style="margin:0 0 8px">這支手機已開啟。每天早上約 9 點會收到「昨天」的摘要：奶量、擠奶量、尿布、睡眠。</p><button class="mini" style="background:var(--band);color:var(--ink)" data-act="pushoff">關閉這支手機的推播</button>`;
+  else if(pushOn()) body=`<p class="hint" style="margin:0 0 8px">這支手機已開啟。每天早上約 9 點會收到「昨天」的摘要：奶量、擠奶量、尿布、睡眠。${S.pushLast?`<br>上次送出：${new Date(S.pushLast.t).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}・${S.pushLast.ok} 支手機`:''}</p><button class="mini" style="background:var(--band);color:var(--ink)" data-act="pushoff">關閉這支手機的推播</button>`;
   else body=`<p class="hint" style="margin:0 0 8px">每天早上約 9 點推送昨天的奶量、擠奶量、尿布和睡眠，App 關著也收得到。每支手機要各自開啟一次。</p><button class="mini" data-act="pushon">在這支手機開啟</button>`;
   return `<div class="card notif">${ic('bell')}<div style="flex:1"><b>每日摘要推播</b>${body}</div></div>`;
 }
