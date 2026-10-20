@@ -802,7 +802,6 @@ function predict(){
   if(lp){const pg=avgGap(['pump'],48); out.push({type:'pump',label:'下一次擠奶',at:lp.t+(pg||3*36e5),from:lp.t,basis:pg?'依近 48 小時平均間隔':'約每 3 小時一次'})}
   const sl=S.logs.find(l=>l.type==='sleep');
   if(sl&&!sl.end){out.push({type:'sleep',label:'寶寶正在睡',sleeping:true,from:sl.t})}
-  else if(sl&&sl.end){const [a,b]=wakeWindow(); out.push({type:'sleep',label:'開始哄睡',at:sl.end+a*6e4,at2:sl.end+b*6e4,from:sl.end,basis:`依月齡清醒時間約 ${a}–${b} 分`})}
   const ld=S.logs.find(l=>l.type==='pee'||l.type==='poop');
   if(ld){const g=avgGap(['pee','poop'],48)||2.5*36e5; out.push({type:'pee',label:'檢查尿布',at:ld.t+g,from:ld.t,basis:'依近 48 小時換尿布間隔'})}
   return out;
