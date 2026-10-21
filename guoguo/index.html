@@ -461,6 +461,20 @@ body{transition:background-color .3s}
 :root[data-theme="night"] .scrim{background:rgba(0,0,0,.55)}
 :root[data-theme="night"] img.face{filter:brightness(.88)}
 .theme-pills .pill small{display:block;font-size:10.5px;opacity:.8}
+.cy-open{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;background:var(--surface);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);text-align:left}
+.cy-open svg{width:30px;height:30px;color:var(--primary-deep);flex:none}
+.cy-open b{display:block;font-family:"Huninn",var(--f);font-weight:400;font-size:15.5px}
+.cy-open small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.cy-ctx{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cy-ctx:last-child{border-bottom:0}.cy-ctx span{color:var(--muted)}
+.cy-r{padding:9px 0;border-bottom:1px solid var(--line)}.cy-r:last-of-type{border-bottom:0}
+.cy-rh{display:flex;justify-content:space-between;align-items:baseline}
+.cy-rh b{font-weight:500;font-size:15px}.cy-rh span{font-family:"Fredoka",var(--f);font-weight:600;font-size:16px;color:color-mix(in srgb,var(--c) 75%,var(--ink))}
+.cy-r.top .cy-rh b{font-size:17px}.cy-r.top .cy-rh span{font-size:22px}
+.cy-bar{height:8px;border-radius:4px;background:var(--band);margin-top:5px;overflow:hidden}.cy-bar i{display:block;height:100%;background:var(--c);border-radius:4px}
+.cy-r small{display:block;font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.cy-alert{border:2px solid var(--warn)}.cy-alert b{color:var(--warn);font-size:17px}.cy-alert p{margin:8px 0;line-height:1.6;font-size:14px}
+.cy-done{margin:0 0 8px;font-size:14.5px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -609,7 +623,7 @@ let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   const c=ls('bl_cache');
@@ -670,7 +684,7 @@ function attachFamily(ref,fromCache){
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
-  moneyAttach();
+  moneyAttach(); window.cryAttach&&cryAttach();
   assetsCap={
     async upload(blob){ const d=await blobToData(blob); const r=famRef.collection('photos').doc(); await r.set({d,t:Date.now()}); PHOTOS[r.id]=d; return {id:r.id} },
     async delete(id){ await famRef.collection('photos').doc(id).delete(); delete PHOTOS[id] }
@@ -906,6 +920,8 @@ function viewLog(){
         const ref=l.type==='sleep'&&l.end?l.end:l.t;
         return `<button class="lastc" data-act="edit" data-id="${l.id}" style="--c:${cvar(t)}">${badge(t)}<div><b class="num">${l.type==='sleep'&&!l.end?'睡覺中':rel(now-ref)+'前'}</b><small>${n} · ${esc(f(l))}</small></div></button>`}).join('');
     sinceCard=`${nx?`<div class="next"><h3>接下來<small>依記錄推估，僅供參考</small></h3>${nx}</div>`:''}`;
+  }
+  if(isToday&&!S.readOnly){ sinceCard+=`<button class="cy-open" data-cy="open">${ic('baby')}<span><b>寶寶在哭？狀態辨識</b><small>勾選觀察到的樣子，依記錄推估最可能的原因</small></span></button>`;
   }
   const items=list.slice().sort((a,b)=>b.t-a.t);
   const tl = items.length? `<ul class="tl">${items.map(itemRow).join('')}</ul>` :
@@ -1861,5 +1877,6 @@ window.addEventListener('DOMContentLoaded',()=>{render();initStore()});
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 <script src="money.js"></script>
+<script src="cry.js"></script>
 </body>
 </html>
