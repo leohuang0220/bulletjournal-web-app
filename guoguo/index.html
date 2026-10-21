@@ -19,7 +19,7 @@
   --bg:#FFF5F7; --surface:#FFFFFF; --ink:#4B3F57; --muted:#9C90A6; --line:#F4DEE4;
   --primary:#EE7D95; --primary-deep:#D9607B; --on-primary:#FFFFFF;
   --c-breast:#F07E9A; --c-bmilk:#F59E7E; --c-formula:#F2B23A; --c-pump:#C69ADB;
-  --c-pee:#4FC2A7; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --c-bath:#4DB6E8; --c-sick:#E8845A; --c-event:#8E9BD6; --primary-soft:#FDE3E8;
+  --c-pee:#4FC2A7; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --c-bath:#4DB6E8; --c-sick:#E8845A; --c-event:#8E9BD6; --c-awake:#E39A4F; --primary-soft:#FDE3E8;
   --warn:#E5484D; --ok:#2E9E7A;
   --band:#F7E9EE; --shadow:0 6px 20px rgba(214,96,123,.12);
   --f:"Fredoka","Huninn","PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
@@ -490,6 +490,7 @@ body{transition:background-color .3s}
     <symbol id="i-mood" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11" fill="currentColor" fill-opacity=".25"/><circle cx="12" cy="14" r="1.3" fill="currentColor"/><circle cx="20" cy="14" r="1.3" fill="currentColor"/><path d="M11.5 19c2.5 3 6.5 3 9 0"/><circle cx="8.8" cy="18" r="1.4" fill="currentColor" fill-opacity=".5" stroke="none"/><circle cx="23.2" cy="18" r="1.4" fill="currentColor" fill-opacity=".5" stroke="none"/></g></symbol>
     <symbol id="i-solid" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 15h23a11.5 11.5 0 0 1-23 0z" fill="currentColor" fill-opacity=".3"/><path d="M12 27h8"/><path d="M20 12l7-8"/><ellipse cx="25.5" cy="5.5" rx="2" ry="3" transform="rotate(40 25.5 5.5)"/><path d="M10 11c0-2 2-2 2-4M15 11c0-2 2-2 2-4"/></g></symbol>
     <symbol id="i-med" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h6v4h-6z" fill="currentColor" fill-opacity=".35"/><path d="M11 8h10v4l1.5 2v12a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V14L11 12z"/><path d="M16 16.5v6M13 19.5h6"/></g></symbol>
+    <symbol id="i-awake" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="5.5" fill="currentColor" fill-opacity=".3"/><path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2.1 2.1M22.4 22.4l2.1 2.1M7.5 24.5l2.1-2.1M22.4 9.6l2.1-2.1"/></g></symbol>
     <symbol id="i-bath" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 15h25v2a8 8 0 0 1-8 8h-9a8 8 0 0 1-8-8z" fill="currentColor" fill-opacity=".28"/><path d="M8 25l-1.5 3M24 25l1.5 3"/><path d="M7 15V9a3.5 3.5 0 0 1 6.5-1.8"/><circle cx="19" cy="10" r="1.2"/><circle cx="23.5" cy="7.5" r="1"/><circle cx="25" cy="12" r=".9"/></g></symbol>
     <symbol id="i-sick" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11" fill="currentColor" fill-opacity=".22"/><path d="M10.5 13l3 1.3M21.5 13l-3 1.3"/><path d="M11.5 22c2.6-2.6 6.4-2.6 9 0"/><path d="M22 6.5c1.2 1.6 2 2.6 2 3.8a2 2 0 0 1-4 0c0-1.2.8-2.2 2-3.8z" fill="currentColor" fill-opacity=".5"/></g></symbol>
     <symbol id="i-event" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="22" height="20" rx="4" fill="currentColor" fill-opacity=".22"/><path d="M11 4v5M21 4v5M5 13h22"/><path d="M16 16.2l1.6 3.2 3.5.5-2.5 2.4.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.5-2.4 3.5-.5z" fill="currentColor" fill-opacity=".5"/></g></symbol>
@@ -542,11 +543,12 @@ const TYPES = {
   mood:{n:'寶寶狀態',c:'--c-mood',ic:'mood'},
   solid:{n:'副食品',c:'--c-solid',ic:'solid'},
   med:{n:'用藥',c:'--c-med',ic:'med'},
+  awake:{n:'清醒玩耍',c:'--c-awake',ic:'awake'},
   bath:{n:'洗澡',c:'--c-bath',ic:'bath'},
   sick:{n:'不舒服',c:'--c-sick',ic:'sick'},
   event:{n:'其他事件',c:'--c-event',ic:'event'},
 };
-const ORDER = ['breast','bmilk','formula','pee','poop','sleep','pump','temp','mood','bath','sick','solid','med','event'];
+const ORDER = ['breast','bmilk','formula','pee','poop','sleep','pump','temp','awake','mood','bath','sick','solid','med','event'];
 const MILESTONES = ['回家囉','滿月','第一次洗澡','第一次笑','會抬頭','會翻身','長牙','會坐','會爬','叫爸爸媽媽','會站','第一步','收涎','抓周'];
 const FEEDS = ['breast','bmilk','formula'];
 /* 台灣嬰兒大便卡：1–3 號（灰白、淡黃）需盡快就醫 */
@@ -556,6 +558,7 @@ const POOP_COLORS = [
   {k:'black',n:'黑色',hex:'#2B2522',warn:true},{k:'red',n:'帶血絲',hex:'#C8403F',warn:true}];
 const POOP_TEX = ['水狀','稀糊','軟糊','條狀','硬粒'];
 const AMOUNT = ['少','中','多'];
+const AWAKE_MOOD=['安靜滿足','開心有笑','有點煩躁','哭鬧'], AWAKE_SELF=['可以自己玩','要人陪','要抱著'], AWAKE_TAG=['看黑白卡','排氣操','發呆','趴趴練習','說話唱歌','搖鈴玩具','照鏡子','撫觸按摩','外出散步'];
 const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
 const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
 const SICK_SEV=['輕微','中等','嚴重'];
@@ -944,6 +947,7 @@ function itemRow(l){
   if(l.type==='mood'&&l.tags&&l.tags.length){v=l.tags.join('、')}
   if(l.type==='solid'){v=[l.food,l.qty].filter(Boolean).join(' '); if(l.react&&l.react!=='沒有異常'){flag=l.react}}
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
+  if(l.type==='awake'){v=[l.calm,l.self,l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.calm==='哭鬧') flag='哭鬧'; if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
   if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title].filter(Boolean).join('・')}
@@ -1162,7 +1166,7 @@ function aiPayload(){
       pumpMl:st.pump.ml, pee:st.pee.n, poop:st.poop.n, poopNotes:inD.filter(l=>l.type==='poop').map(l=>[POOP_COLORS.find(p=>p.k===l.color)?.n,l.tex].filter(Boolean).join('/')).filter(Boolean),
       sleepHours:+(st.sleep/36e5).toFixed(1), longestSleepH:+(Math.max(0,...S.logs.filter(l=>l.type==='sleep'&&l.end&&l.t>=d&&l.t<d+DAY).map(l=>l.end-l.t))/36e5).toFixed(1),
       maxTemp:Math.max(0,...inD.filter(l=>l.type==='temp').map(l=>+l.c))||null, moods:[...new Set(inD.filter(l=>l.type==='mood').flatMap(l=>l.tags||[]))],
-      solids:inD.filter(l=>l.type==='solid').map(l=>[l.food,l.qty,l.react].filter(Boolean).join(' ')), baths:inD.filter(l=>l.type==='bath').length, sickness:inD.filter(l=>l.type==='sick').map(l=>[(l.tags||[]).join('/'),l.sev].filter(Boolean).join(' ')), events:inD.filter(l=>l.type==='event').map(l=>[(l.what||[]).join('/'),l.title].filter(Boolean).join(' ')), meds:inD.filter(l=>l.type==='med').map(l=>[l.drug,l.dose].filter(Boolean).join(' ')),
+      solids:inD.filter(l=>l.type==='solid').map(l=>[l.food,l.qty,l.react].filter(Boolean).join(' ')), baths:inD.filter(l=>l.type==='bath').length, awake:inD.filter(l=>l.type==='awake').map(l=>[l.calm,l.self,(l.tags||[]).join('/'),l.min?l.min+'分':''].filter(Boolean).join(' ')), sickness:inD.filter(l=>l.type==='sick').map(l=>[(l.tags||[]).join('/'),l.sev].filter(Boolean).join(' ')), events:inD.filter(l=>l.type==='event').map(l=>[(l.what||[]).join('/'),l.title].filter(Boolean).join(' ')), meds:inD.filter(l=>l.type==='med').map(l=>[l.drug,l.dose].filter(Boolean).join(' ')),
       notes:inD.filter(l=>l.note).map(l=>TYPES[l.type]?.n+'：'+l.note).slice(0,6)}});
   const corr=(a&&S.baby.ga&&S.baby.ga<37)?+(a.months-(40-S.baby.ga)/4.345).toFixed(1):null;
   const growth=S.growth.slice(-4).map(g=>({date:g.d,kg:g.w,cm:g.h,headCm:g.hc}));
@@ -1561,7 +1565,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) notifyDu
 /* ───────── tray ───────── */
 const TRAY_DEF=['bmilk','formula','pump','pee','poop'];
 function trayOrder(){ return TRAY_DEF.concat(ORDER.filter(t=>!TRAY_DEF.includes(t))) }
-const TYPE_GROUPS=[['餵食',['bmilk','formula','pump','solid','breast']],['排泄與睡眠',['pee','poop','sleep']],['健康',['temp','sick','med']],['日常',['mood','bath','event']]];
+const TYPE_GROUPS=[['餵食',['bmilk','formula','pump','solid','breast']],['排泄與睡眠',['pee','poop','sleep']],['健康',['temp','sick','med']],['日常',['awake','mood','bath','event']]];
 function drawMore(){
   document.getElementById('modal').innerHTML=`<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="記錄類型">
    <div class="grab"></div><div class="sh-hd"><span class="badge" style="--c:var(--primary)">${ic('plus')}</span><h3>要記錄什麼？</h3><button class="x" data-act="close" aria-label="關閉">${ic('x')}</button></div>
@@ -1666,6 +1670,14 @@ function drawSheet(confirming){
       <div class="card"><span class="lbl">吃完的反應</span><div class="pills">${['沒有異常','喜歡','不喜歡','起疹子','腹瀉','嘔吐'].map(a=>`<button class="pill" style="--c:var(--c-solid)" data-pick="react" data-v="${a}" aria-pressed="${rec.react===a}">${a}</button>`).join('')}</div>
       <p class="hint">新食材建議一次只加一種、觀察 3 天，方便找出過敏原。</p></div>`+timeField('f-t','時間',rec.t);
   }
+  if(type==='awake'){
+    const tags=rec.tags||[];
+    body+=`<div class="card"><span class="lbl">狀態</span><div class="pills">${AWAKE_MOOD.map(a=>`<button class="pill" style="--c:var(--c-awake)" data-pick="calm" data-v="${a}" aria-pressed="${rec.calm===a}">${a}</button>`).join('')}</div>
+      <span class="lbl" style="margin-top:12px">可以自己玩嗎</span><div class="pills">${AWAKE_SELF.map(a=>`<button class="pill" style="--c:var(--c-awake)" data-pick="self" data-v="${a}" aria-pressed="${rec.self===a}">${a}</button>`).join('')}</div>
+      <span class="lbl" style="margin-top:12px">做了什麼（可複選）</span><div class="pills">${AWAKE_TAG.map(m=>`<button class="pill" style="--c:var(--c-awake)" data-tag="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
+      <label class="lbl" for="f-amin" style="margin-top:12px">清醒玩了幾分鐘（選填）</label><input class="field num" id="f-amin" type="number" inputmode="numeric" min="1" max="300" value="${rec.min??''}" placeholder="例如 30">
+      <p class="hint">黑白卡距離眼睛約 20–30 公分；趴趴練習要在大人看著、寶寶清醒時做。</p></div>`+timeField('f-t','開始時間',rec.t);
+  }
   if(type==='bath'){
     const tags=rec.tags||[];
     body+=`<div class="card"><span class="lbl">怎麼洗</span><div class="pills">${BATH_HOW.map(a=>`<button class="pill" style="--c:var(--c-bath)" data-pick="how" data-v="${a}" aria-pressed="${rec.how===a}">${a}</button>`).join('')}</div>
@@ -1726,6 +1738,7 @@ function syncFields(){const r=cur.rec; const t=grab('f-t'); if(t) r.t=fromInput(
   if(cur.type==='solid'){r.food=grab('f-food').trim();r.qty=grab('f-qty').trim()}
   if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}
   if(cur.type==='bath'){r.wt=grab('f-wt');r.min=grab('f-bmin')}
+  if(cur.type==='awake'){r.min=grab('f-amin')}
   if(cur.type==='event'){r.title=grab('f-title').trim()}}
 async function doSave(){
   syncFields(); const r=cur.rec, type=cur.type;
@@ -1744,6 +1757,7 @@ async function doSave(){
   if(type==='temp'){out.c=+document.getElementById('f-c').textContent; if(r.site) out.site=r.site}
   if(type==='solid'){if(!r.food){toast('請填吃了什麼');return} out.food=r.food; if(r.qty)out.qty=r.qty; if(r.react)out.react=r.react}
   if(type==='med'){if(!r.drug){toast('請填藥名');return} out.drug=r.drug; if(r.dose)out.dose=r.dose}
+  if(type==='awake'){ if(r.calm)out.calm=r.calm; if(r.self)out.self=r.self; out.tags=r.tags||[]; if(+r.min)out.min=+r.min; if(!out.calm&&!out.self&&!out.tags.length&&!out.note&&!out.min){toast('請選一個狀態或做了什麼');return} }
   if(type==='bath'){ if(r.how)out.how=r.how; out.tags=r.tags||[]; if(+r.wt)out.wt=+r.wt; if(+r.min)out.min=+r.min }
   if(type==='sick'){out.tags=r.tags||[]; if(r.sev)out.sev=r.sev; if(!out.tags.length&&!out.note){toast('請選一個症狀或寫備註');return}}
   if(type==='event'){out.what=r.what||[]; if(r.title)out.title=r.title; if(!out.what.length&&!out.title&&!out.note){toast('請選一項或寫標題');return}}
