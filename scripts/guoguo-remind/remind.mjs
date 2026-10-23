@@ -73,7 +73,7 @@ async function daySummary(famRef, name) {
   const inD = logs.filter(l => l.t >= t0 && l.t < t1), of = t => inD.filter(l => l.type === t);
   const sum = (a, f) => a.reduce((s, l) => s + (+f(l) || 0), 0);
   const bm = sum(of('bmilk'), l => l.ml), fm = sum(of('formula'), l => l.ml), bottles = of('bmilk').length + of('formula').length;
-  const pump = sum(of('pump'), l => (l.left || 0) + (l.right || 0)), pumpN = of('pump').length;
+  const pump = sum(of('pump'), l => (+l.ml || 0) + (+l.left || 0) + (+l.right || 0)), pumpN = of('pump').length;
   const pee = of('pee').length, poop = of('poop').length, breast = of('breast').length;
   const sleep = logs.filter(l => l.type === 'sleep').reduce((s, l) => s + Math.max(0, Math.min(l.end || t1, t1) - Math.max(l.t, t0)), 0);
   if (!inD.length && !sleep) return null;
