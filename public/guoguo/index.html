@@ -146,6 +146,7 @@ button{cursor:pointer;border:0;background:none}
 .stepper button{width:48px;height:48px;border-radius:50%;background:color-mix(in srgb,var(--c) 18%,var(--surface));color:var(--c);font-size:24px;font-weight:600}
 .stepper .v{font-size:40px;font-weight:600;min-width:120px;text-align:center;color:var(--c)}
 .stepper .v small{font-size:16px;margin-left:2px}
+.stepper.mls{gap:6px}.stepper.mls button{width:46px;height:46px;font-size:16px}.stepper.mls button.s5{width:38px;height:38px;font-size:14px}.stepper.mls .v{min-width:96px;font-size:36px}
 .save{width:100%;height:52px;border-radius:999px;background:var(--c,var(--primary));color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
 .save svg{width:20px;height:20px}
 .del{width:100%;margin-top:10px;color:var(--warn);font-size:14px;padding:10px}
@@ -1634,7 +1635,7 @@ function drawSheet(confirming){
   }
   if(type==='bmilk'||type==='formula'||type==='pump'){
     const ml=type==='pump'?(rec.id?pumpMl(rec):(ls('bl_last_pump')||100)):(rec.ml ?? (ls('bl_last_'+type)||90));
-    body+=`<div class="card"><div class="stepper" style="--c:${cvar(type)}"><button data-act="ml" data-d="-10" aria-label="減少10ml">−</button><div class="v num"><span id="f-ml">${ml}</span><small>ml</small></div><button data-act="ml" data-d="10" aria-label="增加10ml">+</button></div>
+    body+=`<div class="card"><div class="stepper mls" style="--c:${cvar(type)}"><button data-act="ml" data-d="-10" aria-label="減少10ml">−10</button><button class="s5" data-act="ml" data-d="-5" aria-label="減少5ml">−5</button><div class="v num"><span id="f-ml">${ml}</span><small>ml</small></div><button class="s5" data-act="ml" data-d="5" aria-label="增加5ml">+5</button><button data-act="ml" data-d="10" aria-label="增加10ml">+10</button></div>
       <div class="pills" style="justify-content:center">${(type==='pump'?[40,60,80,100,120,150,200]:[30,60,90,120,150,180,210]).map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
   }
   if(type==='pee'){
