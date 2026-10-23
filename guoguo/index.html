@@ -204,6 +204,7 @@ button{cursor:pointer;border:0;background:none}
 .mlt li b{font-size:15px;color:var(--primary-deep);font-weight:600}
 .mlt li small{display:block;font-size:10.5px;color:var(--muted)}
 .mlt li.now{background:color-mix(in srgb,var(--primary) 7%,var(--surface))}
+.pmt li{grid-template-columns:1.3fr 1.3fr 1fr 1fr}
 .mlt li.tot{background:var(--band);color:var(--ink);font-size:13px}
 .addbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:46px;border-radius:999px;background:var(--primary);color:var(--on-primary);margin-top:12px;font-size:15px}
 .addbtn svg{width:18px;height:18px}
@@ -843,13 +844,14 @@ function logsInRange(a,b){
 
 /* ───────── day stats ───────── */
 function dayLogs(day){const e=day+DAY;return S.logs.filter(l=>(l.t>=day&&l.t<e)||(l.type==='sleep'&&l.t<e&&(l.end||Date.now())>day))}
+function pumpMl(l){return (+l.ml||0)+(+l.left||0)+(+l.right||0)}
 function stats(list,day){
   const e=day+DAY, inDay=list.filter(l=>l.t>=day&&l.t<e), st={};
   const of=t=>inDay.filter(l=>l.type===t);
   const br=of('breast'); st.breast={n:br.length,L:br.reduce((s,l)=>s+(l.left||0),0),R:br.reduce((s,l)=>s+(l.right||0),0)};
   st.bmilk={n:of('bmilk').length,ml:of('bmilk').reduce((s,l)=>s+(l.ml||0),0)};
   st.formula={n:of('formula').length,ml:of('formula').reduce((s,l)=>s+(l.ml||0),0)};
-  st.pump={n:of('pump').length,ml:of('pump').reduce((s,l)=>s+(l.left||0)+(l.right||0),0),L:of('pump').reduce((s,l)=>s+(l.left||0),0),R:of('pump').reduce((s,l)=>s+(l.right||0),0)};
+  st.pump={n:of('pump').length,ml:of('pump').reduce((s,l)=>s+pumpMl(l),0)};
   st.pee={n:of('pee').length}; st.poop={n:of('poop').length};
   st.sleep=list.filter(l=>l.type==='sleep').reduce((s,l)=>s+Math.max(0,Math.min(l.end||Date.now(),e)-Math.max(l.t,day)),0);
   const tp=of('temp'); st.temp=tp.length?tp.reduce((a,b)=>a.t>b.t?a:b).c:null;
@@ -918,7 +920,7 @@ function viewLog(){
     const cards=[[FEEDS,'formula','餵奶',l=>l.type==='breast'?`母乳 左${Math.round((l.left||0)/60)} 右${Math.round((l.right||0)/60)}分`:`${TYPES[l.type].n} ${l.ml||0}ml`],
       [['pee','poop'],'poop','尿布',l=>TYPES[l.type].n],
       [['sleep'],'sleep','睡眠',l=>l.end?`睡了 ${dur(l.end-l.t)}`:'睡覺中'],
-      [['pump'],'pump','擠奶',l=>`${(l.left||0)+(l.right||0)} ml`]].map(([ts,t,n,f])=>{
+      [['pump'],'pump','擠奶',l=>`${pumpMl(l)} ml`]].map(([ts,t,n,f])=>{
         const l=lastOf(ts); if(!l) return '';
         const ref=l.type==='sleep'&&l.end?l.end:l.t;
         return `<button class="lastc" data-act="edit" data-id="${l.id}" style="--c:${cvar(t)}">${badge(t)}<div><b class="num">${l.type==='sleep'&&!l.end?'睡覺中':rel(now-ref)+'前'}</b><small>${n} · ${esc(f(l))}</small></div></button>`}).join('');
@@ -939,7 +941,7 @@ function itemRow(l){
   let v='', meta=[], flag='', extra='';
   if(l.type==='breast'){v=`左${Math.round((l.left||0)/60)}分 右${Math.round((l.right||0)/60)}分`}
   if(l.type==='bmilk'||l.type==='formula'){v=`${l.ml||0} ml`}
-  if(l.type==='pump'){v=`${(l.left||0)+(l.right||0)} ml`; meta.push(`左${l.left||0} 右${l.right||0}`)}
+  if(l.type==='pump'){v=`${pumpMl(l)} ml`}
   if(l.type==='pee'&&l.amt){v=l.amt}
   if(l.type==='poop'){const pc=POOP_COLORS.find(p=>p.k===l.color); v=[pc&&pc.n,l.tex,l.amt].filter(Boolean).join('・'); if(pc&&pc.warn) flag='請留意'}
   if(l.type==='sleep'){ if(l.end){v=dur(l.end-l.t); meta.push(`${hm(l.t)}–${hm(l.end)}`)} else {v='睡覺中 '+dur(Date.now()-l.t); extra=`<button class="wake" data-act="wake" data-id="${l.id}">起床</button>`} }
@@ -1044,10 +1046,10 @@ function sumChart(){
 function pumpTable(past){
   const today=startOfDay(Date.now()), rows=past.slice().reverse(), sum=k=>rows.reduce((s,d)=>s+d.st.pump[k],0);
   return `<div class="sect"><h2>每日總擠奶量</h2><span>點一天看明細</span></div>
-   <ul class="gl mlt"><li class="h"><span>日期</span><span>總擠奶量</span><span>左</span><span>右</span><span>次數</span></li>
+   <ul class="gl mlt pmt"><li class="h"><span>日期</span><span>總擠奶量</span><span>次數</span><span>每次平均</span></li>
    ${rows.map(d=>{const dd=new Date(d.d), p=d.st.pump;
-     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${p.ml}</b> ml</span><span>${p.L}</span><span>${p.R}</span><span>${p.n} 次${p.n?`<small>每次約 ${Math.round(p.ml/p.n)}</small>`:''}</span></li>`}).join('')}
-   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum('ml')}</b> ml</span><span>${sum('L')}</span><span>${sum('R')}</span><span>${sum('n')} 次</span></li></ul>
+     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${p.ml}</b> ml</span><span>${p.n} 次</span><span>${p.n?Math.round(p.ml/p.n)+' ml':'—'}</span></li>`}).join('')}
+   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum('ml')}</b> ml</span><span>${sum('n')} 次</span><span>${sum('n')?Math.round(sum('ml')/sum('n'))+' ml':'—'}</span></li></ul>
    <p class="hint">以每天 0:00–24:00 計算。擠出來的奶拿去瓶餵時，請另外記「瓶餵母乳」，才會算進總奶量。</p>`;
 }
 function mlTable(past){
@@ -1630,13 +1632,10 @@ function drawSheet(confirming){
     : `<div class="card"><span class="lbl">親餵分鐘</span><div class="row"><input class="field num" id="f-lm" type="number" inputmode="numeric" min="0" value="${Math.round((rec.left||0)/60)}" aria-label="左邊分鐘"><input class="field num" id="f-rm" type="number" inputmode="numeric" min="0" value="${Math.round((rec.right||0)/60)}" aria-label="右邊分鐘"></div></div>`;
     body+=timeField('f-t','開始時間',rec.t);
   }
-  if(type==='bmilk'||type==='formula'){
-    const ml=rec.ml ?? (ls('bl_last_'+type)||90);
+  if(type==='bmilk'||type==='formula'||type==='pump'){
+    const ml=type==='pump'?(rec.id?pumpMl(rec):(ls('bl_last_pump')||100)):(rec.ml ?? (ls('bl_last_'+type)||90));
     body+=`<div class="card"><div class="stepper" style="--c:${cvar(type)}"><button data-act="ml" data-d="-10" aria-label="減少10ml">−</button><div class="v num"><span id="f-ml">${ml}</span><small>ml</small></div><button data-act="ml" data-d="10" aria-label="增加10ml">+</button></div>
-      <div class="pills" style="justify-content:center">${[30,60,90,120,150,180,210].map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
-  }
-  if(type==='pump'){
-    body+=`<div class="card"><span class="lbl">擠出量（ml）</span><div class="row"><input class="field num" id="f-pl" type="number" inputmode="numeric" min="0" placeholder="左" value="${rec.left??''}" aria-label="左邊ml"><input class="field num" id="f-pr" type="number" inputmode="numeric" min="0" placeholder="右" value="${rec.right??''}" aria-label="右邊ml"></div></div>`+timeField('f-t','時間',rec.t);
+      <div class="pills" style="justify-content:center">${(type==='pump'?[40,60,80,100,120,150,200]:[30,60,90,120,150,180,210]).map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
   }
   if(type==='pee'){
     body+=`<div class="card"><span class="lbl">尿量</span><div class="pills">${AMOUNT.map(a=>`<button class="pill" style="--c:var(--c-pee)" data-pick="amt" data-v="${a}" aria-pressed="${rec.amt===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
@@ -1734,7 +1733,6 @@ async function dropAssets(ids){ if(assetsCap) for(const p of (ids||[])){ try{ aw
 function grab(id){const el=document.getElementById(id);return el?el.value:''}
 function syncFields(){const r=cur.rec; const t=grab('f-t'); if(t) r.t=fromInput(t); const n=document.getElementById('f-note'); if(n) r.note=n.value;
   if(cur.type==='sleep'){const e=grab('f-end'); r.end=e?fromInput(e):null}
-  if(cur.type==='pump'){r.left=+grab('f-pl')||0;r.right=+grab('f-pr')||0}
   if(cur.type==='solid'){r.food=grab('f-food').trim();r.qty=grab('f-qty').trim()}
   if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}
   if(cur.type==='bath'){r.wt=grab('f-wt');r.min=grab('f-bmin')}
@@ -1750,7 +1748,7 @@ async function doSave(){
     if(!out.left&&!out.right){toast('請先計時或填分鐘');return}
   }
   if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml)}
-  if(type==='pump'){out.left=r.left;out.right=r.right; if(!out.left&&!out.right){toast('請填擠奶量');return}}
+  if(type==='pump'){out.ml=+document.getElementById('f-ml').textContent; if(!out.ml){toast('請填擠奶量');return} ls('bl_last_pump',out.ml)}
   if(type==='pee'&&r.amt) out.amt=r.amt;
   if(type==='poop'){['color','tex','amt'].forEach(k=>{if(r[k])out[k]=r[k]})}
   if(type==='sleep'){out.end=r.end||null; if(out.end&&out.end<out.t){toast('起床時間要晚於入睡時間');return}}
