@@ -1,6 +1,6 @@
 // 果果日記離線快取：頁面與圖示先存；資料由 Firebase 自己離線同步
-const CACHE = 'guoguo-v33';
-const CORE = ['./', './index.html', './config.js', './money.js', './cry.js', './app.webmanifest', './icons/b-icon-192.png', './icons/b-icon-512.png', './icons/b-apple-touch-icon.png', './icons/face.jpg'];
+const CACHE = 'guoguo-v34';
+const CORE = ['./', './index.html', './config.js', './money.js', './cry.js', './app.webmanifest', './icons/c-icon-192.png', './icons/c-icon-512.png', './icons/c-apple-touch-icon.png', './icons/face.jpg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
@@ -34,7 +34,7 @@ async function checkRem(){
   for(const x of items||[]){
     const left=Math.round((Date.parse(x.date)-Date.parse(today))/864e5); const k=x.id+'@'+x.date;
     if(left<0||left>x.remind||log[k]===today) continue;
-    await self.registration.showNotification(`${name}・${left===0?'今天':left===1?'明天':left+' 天後'}：${x.t}`,{body:`預約日期 ${x.date.replace(/-/g,'/')}，打開果果日記查看或標記完成。`,tag:k,icon:'icons/b-icon-192.png',badge:'icons/b-icon-192.png',data:{url:'./index.html#care'}});
+    await self.registration.showNotification(`${name}・${left===0?'今天':left===1?'明天':left+' 天後'}：${x.t}`,{body:`預約日期 ${x.date.replace(/-/g,'/')}，打開果果日記查看或標記完成。`,tag:k,icon:'icons/c-icon-192.png',badge:'icons/c-icon-192.png',data:{url:'./index.html#care'}});
     log[k]=today;
   }
   await c.put('./__remlog.json',new Response(JSON.stringify(log)));
@@ -43,7 +43,7 @@ self.addEventListener('periodicsync',e=>{ if(e.tag==='gg-remind') e.waitUntil(ch
 // 每日摘要推播（由 GitHub Actions 每天早上送出）
 self.addEventListener('push',e=>{
   let d={}; try{ d=e.data?e.data.json():{} }catch(_){ d={body:e.data&&e.data.text()} }
-  e.waitUntil(self.registration.showNotification(d.title||'果果日記',{body:d.body||'',tag:d.tag||'gg-daily',icon:'icons/b-icon-192.png',badge:'icons/b-icon-192.png',data:{url:d.url||'./index.html'}}));
+  e.waitUntil(self.registration.showNotification(d.title||'果果日記',{body:d.body||'',tag:d.tag||'gg-daily',icon:'icons/c-icon-192.png',badge:'icons/c-icon-192.png',data:{url:d.url||'./index.html'}}));
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close(); const url=new URL((e.notification.data&&e.notification.data.url)||'./index.html#care',self.registration.scope).href;
