@@ -75,10 +75,12 @@ async function daySummary(famRef, name) {
   const bm = sum(of('bmilk'), l => l.ml), fm = sum(of('formula'), l => l.ml), bottles = of('bmilk').length + of('formula').length;
   const pump = sum(of('pump'), l => (+l.ml || 0) + (+l.left || 0) + (+l.right || 0)), pumpN = of('pump').length;
   const pee = of('pee').length, poop = of('poop').length, breast = of('breast').length;
-  // 尿布片數：尿尿和便便相隔 20 分鐘內算同一片（和 App 相同規則）
-  const ev = inD.filter(l => l.type === 'pee' || l.type === 'poop').sort((a, b) => a.t - b.t), used = new Set(); let both = 0;
-  ev.filter(l => l.type === 'poop').forEach(p => { const m = ev.find(x => x.type === 'pee' && !used.has(x) && Math.abs(x.t - p.t) <= 20 * 60e3); if (m) { used.add(m); both++ } });
-  const diapers = ev.length - both;
+  // 尿布片數（和 App 相同規則）：有標片數(dp)的直接加總；舊記錄尿尿和便便相隔 20 分鐘內算同一片
+  const ev = inD.filter(l => l.type === 'pee' || l.type === 'poop' || l.type === 'diaper');
+  let diapers = ev.filter(l => l.dp != null || l.type === 'diaper').reduce((s, l) => s + (l.dp == null ? 1 : +l.dp || 0), 0);
+  const leg = ev.filter(l => l.dp == null && l.type !== 'diaper').sort((a, b) => a.t - b.t), used = new Set(); let both = 0;
+  leg.filter(l => l.type === 'poop').forEach(p => { const m = leg.find(x => x.type === 'pee' && !used.has(x) && Math.abs(x.t - p.t) <= 20 * 60e3); if (m) { used.add(m); both++ } });
+  diapers += leg.length - both;
   const sleep = logs.filter(l => l.type === 'sleep').reduce((s, l) => s + Math.max(0, Math.min(l.end || t1, t1) - Math.max(l.t, t0)), 0);
   if (!inD.length && !sleep) return null;
   const md = new Date(t0 + 8 * H), label = `${md.getUTCMonth() + 1}/${md.getUTCDate()}`;
