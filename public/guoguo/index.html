@@ -941,7 +941,7 @@ function itemRow(l){
   const T=TYPES[l.type]; if(!T) return '';
   let v='', meta=[], flag='', extra='';
   if(l.type==='breast'){v=`左${Math.round((l.left||0)/60)}分 右${Math.round((l.right||0)/60)}分`}
-  if(l.type==='bmilk'||l.type==='formula'){v=`${l.ml||0} ml`}
+  if(l.type==='bmilk'||l.type==='formula'){v=`${l.ml||0} ml`; if(l.bgy) meta.push('寶乖亞')}
   if(l.type==='pump'){v=`${pumpMl(l)} ml`}
   if(l.type==='pee'&&l.amt){v=l.amt}
   if(l.type==='poop'){const pc=POOP_COLORS.find(p=>p.k===l.color); v=[pc&&pc.n,l.tex,l.amt].filter(Boolean).join('・'); if(pc&&pc.warn) flag='請留意'}
@@ -1636,7 +1636,7 @@ function drawSheet(confirming){
   if(type==='bmilk'||type==='formula'||type==='pump'){
     const ml=type==='pump'?(rec.id?pumpMl(rec):(ls('bl_last_pump')||100)):(rec.ml ?? (ls('bl_last_'+type)||90));
     body+=`<div class="card"><div class="stepper mls" style="--c:${cvar(type)}"><button data-act="ml" data-d="-10" aria-label="減少10ml">−10</button><button class="s5" data-act="ml" data-d="-5" aria-label="減少5ml">−5</button><div class="v num"><span id="f-ml">${ml}</span><small>ml</small></div><button class="s5" data-act="ml" data-d="5" aria-label="增加5ml">+5</button><button data-act="ml" data-d="10" aria-label="增加10ml">+10</button></div>
-      <div class="pills" style="justify-content:center">${(type==='pump'?[40,60,80,100,120,150,200]:[30,60,90,120,150,180,210]).map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
+      <div class="pills" style="justify-content:center">${(type==='pump'?[40,60,80,100,120,150,200]:[30,60,90,120,150,180,210]).map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div>${type!=='pump'?`<div class="timer-opts" style="margin:12px 0 0"><span>加入寶乖亞</span><button class="toggle" style="--c-breast:${cvar(type)}" data-act="bgy" aria-pressed="${!!rec.bgy}" aria-label="加入寶乖亞"></button></div>`:''}</div>`+timeField('f-t','時間',rec.t);
   }
   if(type==='pee'){
     body+=`<div class="card"><span class="lbl">尿量</span><div class="pills">${AMOUNT.map(a=>`<button class="pill" style="--c:var(--c-pee)" data-pick="amt" data-v="${a}" aria-pressed="${rec.amt===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
@@ -1748,7 +1748,7 @@ async function doSave(){
     else {out.left=(+lm||0)*60; out.right=(+rm||0)*60}
     if(!out.left&&!out.right){toast('請先計時或填分鐘');return}
   }
-  if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml)}
+  if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml); if(r.bgy) out.bgy=true}
   if(type==='pump'){out.ml=+document.getElementById('f-ml').textContent; if(!out.ml){toast('請填擠奶量');return} ls('bl_last_pump',out.ml)}
   if(type==='pee'&&r.amt) out.amt=r.amt;
   if(type==='poop'){['color','tex','amt'].forEach(k=>{if(r[k])out[k]=r[k]})}
@@ -1836,6 +1836,7 @@ document.addEventListener('click',async e=>{
     case 'side': syncFields(); toggleSide(a.dataset.k); drawSheet(); renderTray(); break;
     case 'treset': resetTimer(); drawSheet(); renderTray(); break;
     case 'alarmtog': {const t=timer();t.alarmOn=!t.alarmOn;setTimer(t);a.setAttribute('aria-pressed',t.alarmOn);break}
+    case 'bgy': cur.rec.bgy=!cur.rec.bgy; a.setAttribute('aria-pressed',!!cur.rec.bgy); break;
     case 'withpee': cur.rec.withPee=!cur.rec.withPee; a.setAttribute('aria-pressed',cur.rec.withPee); break;
     case 'ml': {const el=document.getElementById('f-ml');el.textContent=Math.max(0,+el.textContent+ +a.dataset.d);document.querySelectorAll('[data-setml]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.setml===el.textContent));break}
     case 'tc': {const el=document.getElementById('f-c');el.textContent=Math.min(42,Math.max(34,+el.textContent+ +a.dataset.d)).toFixed(1);break}
