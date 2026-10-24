@@ -628,7 +628,7 @@ let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.dpMeta = ls('bl_diaper')||{}; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   const c=ls('bl_cache');
@@ -685,6 +685,7 @@ function attachFamily(ref,fromCache){
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); saveCache(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
   subs.push(db.doc('meta/push').onSnapshot(s=>{ S.pushKey=s.exists?s.data().publicKey:''; S.pushLast=s.exists?s.data().lastSummary:null; if(S.tab==='set'&&!document.querySelector('.scrim')) render() },()=>{}));
+  subs.push(db.doc('meta/diaper').onSnapshot(s=>{ S.dpMeta=s.exists?s.data():{}; if(S.tab==='sum'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
@@ -846,6 +847,12 @@ function logsInRange(a,b){
 /* ───────── day stats ───────── */
 function dayLogs(day){const e=day+DAY;return S.logs.filter(l=>(l.t>=day&&l.t<e)||(l.type==='sleep'&&l.t<e&&(l.end||Date.now())>day))}
 function pumpMl(l){return (+l.ml||0)+(+l.left||0)+(+l.right||0)}
+const DP_GAP=20*60e3; // 尿尿和便便相隔 20 分鐘內 = 同一片尿布
+function diaperCount(list){
+  const ev=list.filter(l=>l.type==='pee'||l.type==='poop').sort((a,b)=>a.t-b.t), used=new Set(); let both=0;
+  ev.filter(l=>l.type==='poop').forEach(p=>{const m=ev.find(x=>x.type==='pee'&&!used.has(x)&&Math.abs(x.t-p.t)<=DP_GAP); if(m){used.add(m);both++}});
+  return {n:ev.length-both,both};
+}
 function stats(list,day){
   const e=day+DAY, inDay=list.filter(l=>l.t>=day&&l.t<e), st={};
   const of=t=>inDay.filter(l=>l.type===t);
@@ -853,7 +860,7 @@ function stats(list,day){
   st.bmilk={n:of('bmilk').length,ml:of('bmilk').reduce((s,l)=>s+(l.ml||0),0)};
   st.formula={n:of('formula').length,ml:of('formula').reduce((s,l)=>s+(l.ml||0),0)};
   st.pump={n:of('pump').length,ml:of('pump').reduce((s,l)=>s+pumpMl(l),0)};
-  st.pee={n:of('pee').length}; st.poop={n:of('poop').length};
+  st.pee={n:of('pee').length}; st.poop={n:of('poop').length}; st.dp=diaperCount(inDay);
   st.sleep=list.filter(l=>l.type==='sleep').reduce((s,l)=>s+Math.max(0,Math.min(l.end||Date.now(),e)-Math.max(l.t,day)),0);
   const tp=of('temp'); st.temp=tp.length?tp.reduce((a,b)=>a.t>b.t?a:b).c:null;
   return st;
@@ -901,7 +908,7 @@ function viewLog(){
   const chips=[
     ['pump',`${st.pump.ml}<small style="display:inline;font-size:11px">ml</small>`,`擠奶 ${st.pump.n} 次`],
     ['formula',`${totalMl}<small style="display:inline;font-size:11px">ml</small>`,`瓶餵 ${st.bmilk.n+st.formula.n} 次`],
-    ['pee',`${st.pee.n+st.poop.n}次`,`尿 ${st.pee.n}・便 ${st.poop.n}`],
+    ['pee',`${st.dp.n}<small style="display:inline;font-size:11px">片</small>`,`尿布・尿${st.pee.n} 便${st.poop.n}`],
     ['sleep',durShort(st.sleep),'睡眠'],
   ].map(([t,b,s])=>`<div class="chip" style="--c:${cvar(t)}"><div class="ic">${ic(TYPES[t].ic)}</div><b class="num">${b}</b><small>${s}</small></div>`).join('');
 
@@ -1017,7 +1024,7 @@ function sumChart(){
   if(S.sumMode==='ml'){series=[['bmilk',d=>d.st.bmilk.ml],['formula',d=>d.st.formula.ml]];unit='ml'}
   else if(S.sumMode==='pump'){series=[['pump',d=>d.st.pump.ml]];unit='ml'}
   else if(S.sumMode==='breast'){series=[['breast',d=>Math.round((d.st.breast.L+d.st.breast.R)/60)]];unit='分鐘'}
-  else if(S.sumMode==='diaper'){series=[['pee',d=>d.st.pee.n],['poop',d=>d.st.poop.n]];unit='次'}
+  else if(S.sumMode==='diaper'){series=[['pee',d=>d.st.dp.n-d.st.poop.n,'只有尿'],['poop',d=>d.st.poop.n,'有便便']];unit='片'}
   else {series=[['sleep',d=>+(d.st.sleep/36e5).toFixed(1)]];unit='小時'}
   const tot=days.map(d=>series.reduce((s,[,f])=>s+f(d),0));
   let max=Math.max(...tot,1); const step=niceStep(max); max=Math.ceil(max/step)*step;
@@ -1035,14 +1042,87 @@ function sumChart(){
     const dd=new Date(d.d); g+=`<text x="${cx}" y="${H-12}" font-size="10" text-anchor="middle" fill="${d.d===today?'var(--primary-deep)':'var(--muted)'}">${dd.getMonth()+1}/${dd.getDate()}</text><text x="${cx}" y="${H-1}" font-size="9" text-anchor="middle" fill="var(--muted)">${WK[dd.getDay()]}</text>`;
   });
   g+=`<text x="${L}" y="12" font-size="10" fill="var(--muted)">單位：${unit}</text>`;
-  const legend=series.map(([t])=>`<span><i style="background:${cvar(t)}"></i>${TYPES[t].n}</span>`).join('');
+  const legend=series.map(([t,,lab])=>`<span><i style="background:${cvar(t)}"></i>${lab||TYPES[t].n}</span>`).join('');
   const past=days.filter(d=>d.d<=today), n=Math.max(1,past.filter((d)=>d.d<today||true).length);
   const avgTot=past.reduce((s,d,i)=>s+tot[days.indexOf(d)],0)/Math.max(1,past.length);
-  const feedN=past.reduce((s,d)=>s+(S.sumMode==='pump'?d.st.pump.n:d.st.bmilk.n+d.st.formula.n),0)/Math.max(1,past.length);
+  const feedN=past.reduce((s,d)=>s+(S.sumMode==='pump'?d.st.pump.n:S.sumMode==='diaper'?d.st.poop.n:d.st.bmilk.n+d.st.formula.n),0)/Math.max(1,past.length);
   const sl=past.reduce((s,d)=>s+d.st.sleep,0)/Math.max(1,past.length);
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="每日${unit}統計">${g}</svg><div class="legend">${legend}</div></div>
-   <div class="avg"><div><b class="num">${+avgTot.toFixed(1)}</b><small>日均（${unit}）</small></div><div><b class="num">${feedN.toFixed(1)}</b><small>${S.sumMode==='pump'?'日均擠奶次數':'日均瓶餵次數'}</small></div><div><b class="num">${durShort(sl)}</b><small>日均睡眠</small></div></div>
-   ${S.sumMode==='ml'?mlTable(past):S.sumMode==='pump'?pumpTable(past):''}`;
+   <div class="avg"><div><b class="num">${+avgTot.toFixed(1)}</b><small>日均（${unit}）</small></div><div><b class="num">${feedN.toFixed(1)}</b><small>${S.sumMode==='pump'?'日均擠奶次數':S.sumMode==='diaper'?'日均便便次數':'日均瓶餵次數'}</small></div><div><b class="num">${durShort(sl)}</b><small>日均睡眠</small></div></div>
+   ${S.sumMode==='ml'?mlTable(past):S.sumMode==='pump'?pumpTable(past):S.sumMode==='diaper'?diaperPlan()+diaperTable(past):''}`;
+}
+function diaperTable(past){
+  const today=startOfDay(Date.now()), rows=past.slice().reverse(), sum=f=>rows.reduce((s,d)=>s+f(d.st),0);
+  return `<div class="sect"><h2>每日尿布片數</h2><span>點一天看明細</span></div>
+   <ul class="gl mlt"><li class="h"><span>日期</span><span>尿布</span><span>尿尿</span><span>便便</span><span>尿+便</span></li>
+   ${rows.map(d=>{const dd=new Date(d.d), st=d.st;
+     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${st.dp.n}</b> 片</span><span>${st.pee.n}</span><span>${st.poop.n}</span><span>${st.dp.both}</span></li>`}).join('')}
+   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum(s=>s.dp.n)}</b> 片</span><span>${sum(s=>s.pee.n)}</span><span>${sum(s=>s.poop.n)}</span><span>${sum(s=>s.dp.both)}</span></li></ul>
+   <p class="hint">尿尿和便便相隔 20 分鐘內算同一片（記便便時打開「同時也有尿尿」也是一片）。以每天 0:00–24:00 計算。</p>`;
+}
+function dpRecent(n){ // 最近 n 個完整的日子（不含今天）
+  const today=startOfDay(Date.now()), out=[];
+  for(let i=n;i>=1;i--){const d=today-i*DAY, inD=S.logs.filter(l=>l.t>=d&&l.t<d+DAY), c=diaperCount(inD);
+    out.push({d,n:c.n,both:c.both,pee:inD.filter(l=>l.type==='pee').length,poop:inD.filter(l=>l.type==='poop').length})}
+  return out;
+}
+function dpLeft(){ const m=S.dpMeta||{}; if(!(m.stock>0)||!m.stockT) return null; return Math.max(0,m.stock-diaperCount(S.logs.filter(l=>l.t>=m.stockT)).n) }
+function diaperPlan(){
+  const m=S.dpMeta||{}, rec=dpRecent(7).filter(d=>d.n>0), avg=rec.length?rec.reduce((s,d)=>s+d.n,0)/rec.length:0;
+  const left=dpLeft(), ai=m.ai&&m.ai.r;
+  const days=left!=null&&avg?Math.floor(left/avg):null;
+  return `<div class="sect"><h2>尿布用量與備貨</h2></div>
+   <div class="card">
+    <div class="avg" style="margin:0"><div><b class="num">${avg?avg.toFixed(1):'—'}</b><small>近 ${rec.length||7} 天日均（片）</small></div><div><b class="num">${avg?Math.round(avg*7):'—'}</b><small>一週約需</small></div><div><b class="num">${avg?Math.round(avg*30):'—'}</b><small>一個月約需</small></div></div>
+    <label class="lbl" for="dp-stock" style="margin-top:14px">家裡現在還有幾片</label>
+    <div class="row"><input class="field num" id="dp-stock" type="number" inputmode="numeric" min="0" placeholder="例如 120" value=""><button class="btn2" data-act="dpstock" style="flex:none">更新庫存</button></div>
+    ${left!=null?`<p class="hint" style="margin-top:8px">${new Date(m.stockT).getMonth()+1}/${new Date(m.stockT).getDate()} 登記 ${m.stock} 片，之後用掉 ${m.stock-left} 片，<b>剩約 ${left} 片</b>${days!=null?`，照目前用量大約還能撐 <b>${days} 天</b>${days<=3?'，該補貨了':''}`:''}。</p>`:'<p class="hint" style="margin-top:8px">填上庫存後，每記一片就會自動扣，算出還能撐幾天。</p>'}
+    <button class="${ai?'btn2':'addbtn'}" data-act="dpai" style="width:100%;margin-top:12px" ${S.dpBusy?'disabled':''}>${S.dpBusy?'AI 估算中…':ai?'重新用 AI 估算':'用 AI 估算要準備多少尿布'}</button>
+    ${ai?`<div style="margin-top:14px">
+      <div class="avg" style="margin:0"><div><b class="num">${ai.perDay}</b><small>AI 建議每天備</small></div><div><b class="num">${ai.week}</b><small>一週</small></div><div><b class="num">${ai.month}</b><small>一個月</small></div></div>
+      ${ai.size?`<p class="note" style="margin-top:10px"><b>尺寸：</b>${esc(ai.size)}</p>`:''}
+      ${ai.buy?`<p class="note"><b>怎麼買：</b>${esc(ai.buy)}</p>`:''}
+      ${ai.reason?`<p class="note"><b>判斷依據：</b>${esc(ai.reason)}</p>`:''}
+      ${(ai.watch||[]).map(w=>`<p class="hint warn">${esc(w)}</p>`).join('')}
+      <p class="hint">${new Date(m.ai.t).getMonth()+1}/${new Date(m.ai.t).getDate()} ${hm(m.ai.t)} 估算・僅供參考</p></div>`:''}
+   </div>`;
+}
+async function dpSaveMeta(patch){
+  S.dpMeta={...(S.dpMeta||{}),...patch};
+  if(S.mode==='db'){ try{ await db.doc('meta/diaper').set(patch,{merge:true}) }catch(e){writeErr(e)} } else ls('bl_diaper',S.dpMeta);
+  render();
+}
+async function runDiaperAI(){
+  const key=(S.fam&&S.fam.geminiKey)||ls('bl_gemini')||'';
+  if(!key){toast('請先到「設定」貼上 Gemini API 金鑰');S.tab='set';render();return}
+  const days=dpRecent(14).filter(d=>d.n||d.pee||d.poop); if(days.length<2){toast('至少要有 2 天的尿布記錄才能估算');return}
+  S.dpBusy=true; render();
+  const a=age(Date.now()), w=[...S.growth].reverse().find(g=>g.w!=null&&g.w!=='');
+  const payload={ageDays:a?a.day:null, ageText:a?a.txt:null, corrected:a&&a.corr, gestationWeeks:S.baby.ga||null, latestWeightKg:w?+w.w:null, weightDate:w?w.d:null, birthKg:S.baby.bw||null,
+    feeding:S.baby.feedMode||null, stockLeft:dpLeft(),
+    days:days.map(d=>{const dd=new Date(d.d);return {date:`${dd.getMonth()+1}/${dd.getDate()}`,diapers:d.n,pee:d.pee,poop:d.poop,peeAndPoopSameDiaper:d.both}})};
+  const prompt=`你是台灣的兒科護理師。以下是一位寶寶最近每天的尿布記錄（diapers＝實際用掉的片數，尿尿和便便同一片只算一片），以及月齡、體重、家裡剩下的片數。
+請判斷這個家庭接下來要準備多少尿布，用繁體中文、台灣用語回答：
+- 以實際記錄的日均為主，再依月齡調整（新生兒一天約 8–12 片，之後逐漸減少；記錄可能漏記夜間換尿布，可酌量加 1–2 片緩衝）。
+- 依體重建議尺寸（台灣常見 NB/S/M/L），體重接近換尺寸時提醒不要一次買太多。
+- 有 stockLeft 時，算出還能撐幾天、建議何時補、補多少包（一包約 60–90 片）。
+- 若尿布片數偏少（滿 5 天後 24 小時少於 6 片濕尿布）放進 watch 提醒就醫評估；沒有就給空陣列。
+只回覆 JSON：{"perDay":數字,"week":數字,"month":數字,"size":"一句話","buy":"一句話","reason":"一句話","watch":["…"]}
+
+資料：
+${JSON.stringify(payload)}`;
+  try{
+    const body=JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.3}});
+    const j=await gemCall(key,body);
+    const txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+    const x=txt.indexOf('{'), y=txt.lastIndexOf('}'); const r=JSON.parse(x>=0&&y>x?txt.slice(x,y+1):txt);
+    if(!r||!(+r.perDay>0)) throw {code:'bad'};
+    const res={perDay:Math.round(+r.perDay),week:Math.round(+r.week||r.perDay*7),month:Math.round(+r.month||r.perDay*30),size:String(r.size||''),buy:String(r.buy||''),reason:String(r.reason||''),watch:arr(r.watch)};
+    S.dpBusy=false; await dpSaveMeta({ai:{t:Date.now(),r:res}}); return;
+  }catch(e){
+    if(e&&e.code==='busy') toast('Gemini 現在太多人用，請 1–2 分鐘後再試'); else if(e&&e.code==='rate_limited') toast('用得太頻繁，稍後再試'); else if(e&&e.code==='api') toast('Gemini 回覆錯誤：'+(e.message||'')); else toast('AI 估算失敗，請再試一次');
+  }
+  S.dpBusy=false; render();
 }
 function pumpTable(past){
   const today=startOfDay(Date.now()), rows=past.slice().reverse(), sum=k=>rows.reduce((s,d)=>s+d.st.pump[k],0);
@@ -1807,6 +1887,8 @@ document.addEventListener('click',async e=>{
   const act=a.dataset.act;
   if((act==='close'||act==='gclose'||act==='mclose'||act==='cclose') && e.target!==a && a.classList.contains('scrim')) return;
   switch(act){
+    case 'dpstock': { const v=+grab('dp-stock'); if(!(v>=0)||grab('dp-stock')===''){toast('請填片數');return} await dpSaveMeta({stock:v,stockT:Date.now()}); toast('庫存已更新'); break }
+    case 'dpai': runDiaperAI(); break;
     case 'goday': S.day=+a.dataset.d; S.tab='log'; render(); window.scrollTo(0,0); break;
     case 'pushon': pushEnable(); break;
     case 'pushoff': pushDisable(); break;

@@ -75,17 +75,21 @@ async function daySummary(famRef, name) {
   const bm = sum(of('bmilk'), l => l.ml), fm = sum(of('formula'), l => l.ml), bottles = of('bmilk').length + of('formula').length;
   const pump = sum(of('pump'), l => (+l.ml || 0) + (+l.left || 0) + (+l.right || 0)), pumpN = of('pump').length;
   const pee = of('pee').length, poop = of('poop').length, breast = of('breast').length;
+  // 尿布片數：尿尿和便便相隔 20 分鐘內算同一片（和 App 相同規則）
+  const ev = inD.filter(l => l.type === 'pee' || l.type === 'poop').sort((a, b) => a.t - b.t), used = new Set(); let both = 0;
+  ev.filter(l => l.type === 'poop').forEach(p => { const m = ev.find(x => x.type === 'pee' && !used.has(x) && Math.abs(x.t - p.t) <= 20 * 60e3); if (m) { used.add(m); both++ } });
+  const diapers = ev.length - both;
   const sleep = logs.filter(l => l.type === 'sleep').reduce((s, l) => s + Math.max(0, Math.min(l.end || t1, t1) - Math.max(l.t, t0)), 0);
   if (!inD.length && !sleep) return null;
   const md = new Date(t0 + 8 * H), label = `${md.getUTCMonth() + 1}/${md.getUTCDate()}`;
   const lines = [
     `🍼 奶量 ${bm + fm} ml（瓶餵母乳 ${bm}・配方 ${fm}，${bottles} 次${breast ? `，親餵 ${breast} 次` : ''}）`,
     pumpN ? `🤱 擠奶 ${pump} ml（${pumpN} 次）` : null,
-    `🧷 尿布 ${pee + poop} 次（尿 ${pee}・便 ${poop}）`,
+    `🧷 尿布 ${diapers} 片（尿 ${pee}・便 ${poop}）`,
     sleep ? `😴 睡眠 ${dur(sleep)}` : null,
     of('sick').length ? `🤒 不舒服 ${of('sick').length} 筆` : null,
   ].filter(Boolean);
-  return { title: `${name} 昨天（${label}）摘要`, body: lines.join('\n'), short: `奶量 ${bm + fm}ml・擠奶 ${pump}ml・尿布 ${pee + poop}・睡 ${dur(sleep)}` };
+  return { title: `${name} 昨天（${label}）摘要`, body: lines.join('\n'), short: `奶量 ${bm + fm}ml・擠奶 ${pump}ml・尿布 ${diapers}片・睡 ${dur(sleep)}` };
 }
 async function pushSummary(f, name) {
   await f.ref.collection('meta').doc('push').set({ publicKey: V.publicKey }, { merge: true });
