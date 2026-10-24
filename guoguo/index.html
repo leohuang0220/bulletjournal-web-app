@@ -19,7 +19,7 @@
   --bg:#FFF5F7; --surface:#FFFFFF; --ink:#4B3F57; --muted:#9C90A6; --line:#F4DEE4;
   --primary:#EE7D95; --primary-deep:#D9607B; --on-primary:#FFFFFF;
   --c-breast:#F07E9A; --c-bmilk:#F59E7E; --c-formula:#F2B23A; --c-pump:#C69ADB;
-  --c-pee:#4FC2A7; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --c-bath:#4DB6E8; --c-sick:#E8845A; --c-event:#8E9BD6; --c-awake:#E39A4F; --primary-soft:#FDE3E8;
+  --c-pee:#4FC2A7; --c-diaper:#3E8FB0; --c-poop:#C2864F; --c-sleep:#9686E6; --c-temp:#EF6A6A; --c-mood:#5FAEEB; --c-solid:#7DBB5A; --c-med:#E58AC8; --c-bath:#4DB6E8; --c-sick:#E8845A; --c-event:#8E9BD6; --c-awake:#E39A4F; --primary-soft:#FDE3E8;
   --warn:#E5484D; --ok:#2E9E7A;
   --band:#F7E9EE; --shadow:0 6px 20px rgba(214,96,123,.12);
   --f:"Fredoka","Huninn","PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
@@ -485,6 +485,7 @@ body{transition:background-color .3s}
     <symbol id="i-bmilk" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3.5h6M14 3.5v3h4v-3"/><rect x="9.5" y="9" width="13" height="19.5" rx="5"/><path d="M9 9h14"/><path d="M16 23.5c-3-2-4-3.4-4-4.8a2 2 0 0 1 4-.6 2 2 0 0 1 4 .6c0 1.4-1 2.8-4 4.8z" fill="currentColor"/></g></symbol>
     <symbol id="i-formula" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3.5h6M14 3.5v3h4v-3"/><rect x="9.5" y="9" width="13" height="19.5" rx="5"/><path d="M9 9h14M9.5 17h13" /><path d="M12 17v6.5a3 3 0 0 0 3 3h2a3 3 0 0 0 3-3V17z" fill="currentColor" fill-opacity=".45" stroke="none"/><path d="M19 13h3M19 20.5h3"/></g></symbol>
     <symbol id="i-pump" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c3 0 9 1 9 5v2"/><path d="M4 4.5v9"/><rect x="10" y="14" width="8" height="5" rx="1.5"/><path d="M11 19v6a3 3 0 0 0 3 3h0a3 3 0 0 0 3-3v-6"/><path d="M18 16h5a3 3 0 0 1 3 3v2"/><path d="M26 25.5a1.6 1.6 0 1 1-3 0c0-1 1.5-3 1.5-3s1.5 2 1.5 3z" fill="currentColor"/></g></symbol>
+    <symbol id="i-diaper" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M5 9h22v4c0 7-5 12-11 12S5 20 5 13z" fill="currentColor" fill-opacity=".25"/><path d="M5 13h4M23 13h4M12 9v3M20 9v3"/></g></symbol>
     <symbol id="i-pee" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M11 5c-3 5-5 8-5 11a5 5 0 0 0 10 0c0-3-2-6-5-11z" fill="currentColor" fill-opacity=".3"/><path d="M22 12c-2.2 3.6-3.6 5.8-3.6 8a3.6 3.6 0 0 0 7.2 0c0-2.2-1.4-4.4-3.6-8z"/></g></symbol>
     <symbol id="i-poop" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4c1 2 4 2.5 4 5.5H12C12 7 15 7 16 4z"/><path d="M10 9.5h12a3.5 3.5 0 0 1 0 7H10a3.5 3.5 0 0 1 0-7z"/><path d="M7.5 16.5h17a4 4 0 0 1 0 8h-17a4 4 0 0 1 0-8z" fill="currentColor" fill-opacity=".3"/><circle cx="13" cy="20.5" r=".6" fill="currentColor"/><circle cx="19" cy="20.5" r=".6" fill="currentColor"/></g></symbol>
     <symbol id="i-sleep" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5a10.5 10.5 0 1 0 7 17.5A9 9 0 0 1 20 5z" fill="currentColor" fill-opacity=".3"/><path d="M12 17.5q1.4 1.5 2.8 0M18.5 17.5q1.4 1.5 2.8 0"/><path d="M24 4.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z" fill="currentColor"/></g></symbol>
@@ -540,6 +541,7 @@ const TYPES = {
   pump:{n:'擠奶',c:'--c-pump',ic:'pump'},
   pee:{n:'尿尿',c:'--c-pee',ic:'pee'},
   poop:{n:'便便',c:'--c-poop',ic:'poop'},
+  diaper:{n:'換尿布',c:'--c-diaper',ic:'diaper'},
   sleep:{n:'睡覺',c:'--c-sleep',ic:'sleep'},
   temp:{n:'體溫',c:'--c-temp',ic:'temp'},
   mood:{n:'寶寶狀態',c:'--c-mood',ic:'mood'},
@@ -550,7 +552,7 @@ const TYPES = {
   sick:{n:'不舒服',c:'--c-sick',ic:'sick'},
   event:{n:'其他事件',c:'--c-event',ic:'event'},
 };
-const ORDER = ['breast','bmilk','formula','pee','poop','sleep','pump','temp','awake','mood','bath','sick','solid','med','event'];
+const ORDER = ['breast','bmilk','formula','pee','poop','diaper','sleep','pump','temp','awake','mood','bath','sick','solid','med','event'];
 const MILESTONES = ['回家囉','滿月','第一次洗澡','第一次笑','會抬頭','會翻身','長牙','會坐','會爬','叫爸爸媽媽','會站','第一步','收涎','抓周'];
 const FEEDS = ['breast','bmilk','formula'];
 /* 台灣嬰兒大便卡：1–3 號（灰白、淡黃）需盡快就醫 */
@@ -560,6 +562,7 @@ const POOP_COLORS = [
   {k:'black',n:'黑色',hex:'#2B2522',warn:true},{k:'red',n:'帶血絲',hex:'#C8403F',warn:true}];
 const POOP_TEX = ['水狀','稀糊','軟糊','條狀','硬粒'];
 const AMOUNT = ['少','中','多'];
+const DP_WHY = ['沒尿（乾的）','出門前','洗澡前後','睡前','漏出來了','其他'];
 const AWAKE_MOOD=['安靜滿足','開心有笑','有點煩躁','哭鬧'], AWAKE_SELF=['可以自己玩','要人陪','要抱著'], AWAKE_TAG=['看黑白卡','排氣操','發呆','趴趴練習','說話唱歌','搖鈴玩具','照鏡子','撫觸按摩','外出散步'];
 const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
 const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
@@ -823,8 +826,8 @@ function predict(){
   if(lp){const pg=avgGap(['pump'],48); out.push({type:'pump',label:'下一次擠奶',at:lp.t+(pg||3*36e5),from:lp.t,basis:pg?'依近 48 小時平均間隔':'約每 3 小時一次'})}
   const sl=S.logs.find(l=>l.type==='sleep');
   if(sl&&!sl.end){out.push({type:'sleep',label:'寶寶正在睡',sleeping:true,from:sl.t})}
-  const ld=S.logs.find(l=>l.type==='pee'||l.type==='poop');
-  if(ld){const g=avgGap(['pee','poop'],48)||2.5*36e5; out.push({type:'pee',label:'檢查尿布',at:ld.t+g,from:ld.t,basis:'依近 48 小時換尿布間隔'})}
+  const ld=S.logs.find(l=>l.type==='pee'||l.type==='poop'||l.type==='diaper');
+  if(ld){const g=avgGap(['pee','poop','diaper'],48)||2.5*36e5; out.push({type:'pee',label:'檢查尿布',at:ld.t+g,from:ld.t,basis:'依近 48 小時換尿布間隔'})}
   return out;
 }
 function rel(ms){const m=Math.round(Math.abs(ms)/6e4);if(m<1)return '剛剛';return dur(Math.abs(ms))}
@@ -847,11 +850,16 @@ function logsInRange(a,b){
 /* ───────── day stats ───────── */
 function dayLogs(day){const e=day+DAY;return S.logs.filter(l=>(l.t>=day&&l.t<e)||(l.type==='sleep'&&l.t<e&&(l.end||Date.now())>day))}
 function pumpMl(l){return (+l.ml||0)+(+l.left||0)+(+l.right||0)}
-const DP_GAP=20*60e3; // 尿尿和便便相隔 20 分鐘內 = 同一片尿布
+const DP_GAP=20*60e3; // 舊記錄（沒標片數）：尿尿和便便相隔 20 分鐘內 = 同一片
+const DPT=t=>t==='pee'||t==='poop'||t==='diaper';
 function diaperCount(list){
-  const ev=list.filter(l=>l.type==='pee'||l.type==='poop').sort((a,b)=>a.t-b.t), used=new Set(); let both=0;
-  ev.filter(l=>l.type==='poop').forEach(p=>{const m=ev.find(x=>x.type==='pee'&&!used.has(x)&&Math.abs(x.t-p.t)<=DP_GAP); if(m){used.add(m);both++}});
-  return {n:ev.length-both,both};
+  const ev=list.filter(l=>DPT(l.type)); let n=0,both=0,extra=0;
+  ev.forEach(l=>{ if(l.type==='diaper'){const k=l.dp==null?1:+l.dp; n+=k; extra+=k; return}
+    if(l.dp==null) return; const k=+l.dp; n+=k; if(k===0) both++; else if(k>1) extra+=k-1 });
+  const leg=ev.filter(l=>l.dp==null&&l.type!=='diaper').sort((a,b)=>a.t-b.t), used=new Set(); let lb=0;
+  leg.filter(l=>l.type==='poop').forEach(p=>{const m=leg.find(x=>x.type==='pee'&&!used.has(x)&&Math.abs(x.t-p.t)<=DP_GAP); if(m){used.add(m);lb++}});
+  n+=leg.length-lb; both+=lb;
+  return {n,both,extra};
 }
 function stats(list,day){
   const e=day+DAY, inDay=list.filter(l=>l.t>=day&&l.t<e), st={};
@@ -926,7 +934,7 @@ function viewLog(){
     }).join('');
     const lastOf=(ts)=>S.logs.find(l=>ts.includes(l.type));
     const cards=[[FEEDS,'formula','餵奶',l=>l.type==='breast'?`母乳 左${Math.round((l.left||0)/60)} 右${Math.round((l.right||0)/60)}分`:`${TYPES[l.type].n} ${l.ml||0}ml`],
-      [['pee','poop'],'poop','尿布',l=>TYPES[l.type].n],
+      [['pee','poop','diaper'],'poop','尿布',l=>TYPES[l.type].n],
       [['sleep'],'sleep','睡眠',l=>l.end?`睡了 ${dur(l.end-l.t)}`:'睡覺中'],
       [['pump'],'pump','擠奶',l=>`${pumpMl(l)} ml`]].map(([ts,t,n,f])=>{
         const l=lastOf(ts); if(!l) return '';
@@ -958,6 +966,8 @@ function itemRow(l){
   if(l.type==='solid'){v=[l.food,l.qty].filter(Boolean).join(' '); if(l.react&&l.react!=='沒有異常'){flag=l.react}}
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
   if(l.type==='awake'){v=[l.calm,l.self,l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.calm==='哭鬧') flag='哭鬧'; if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
+  if(l.type==='diaper'){v=`${l.dp==null?1:l.dp} 片`; if(l.why) meta.push(esc(l.why))}
+  if((l.type==='pee'||l.type==='poop')&&l.dp!=null){ if(+l.dp===0) meta.push('同一片尿布'); else if(+l.dp>1) meta.push(`用了 ${l.dp} 片`) }
   if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
   if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title].filter(Boolean).join('・')}
@@ -970,14 +980,14 @@ function itemRow(l){
 }
 function ribbon(list){
   const W=340,x0=34,x1=334,sc=(t)=>x0+(Math.min(Math.max(t-S.day,0),DAY)/DAY)*(x1-x0);
-  const lanes=[['餵奶',FEEDS.concat('pump'),14],['尿布',['pee','poop'],34],['睡眠',['sleep'],54]];
+  const lanes=[['餵奶',FEEDS.concat('pump'),14],['尿布',['pee','poop','diaper'],34],['睡眠',['sleep'],54]];
   let g='';
   for(let h=0;h<=24;h+=3){const x=x0+h/24*(x1-x0);g+=`<line x1="${x}" x2="${x}" y1="6" y2="62" stroke="var(--line)" stroke-width="1"/><text x="${x}" y="74" font-size="9" text-anchor="middle" fill="var(--muted)">${h}</text>`}
   lanes.forEach(([n,ts,y])=>{g+=`<text x="0" y="${y+3.5}" font-size="9.5" fill="var(--muted)">${n}</text>`});
   list.forEach(l=>{
     if(l.type==='sleep'){const a=sc(l.t),b=sc(l.end||Date.now());g+=`<rect x="${a}" y="49" width="${Math.max(3,b-a)}" height="10" rx="5" fill="var(--c-sleep)" opacity=".85"/>`}
     else if(FEEDS.includes(l.type)||l.type==='pump'){g+=`<circle cx="${sc(l.t)}" cy="14" r="4.5" fill="${cvar(l.type)}"/>`}
-    else if(l.type==='pee'||l.type==='poop'){g+=`<circle cx="${sc(l.t)}" cy="34" r="4.5" fill="${cvar(l.type)}"/>`}
+    else if(l.type==='pee'||l.type==='poop'||l.type==='diaper'){g+=`<circle cx="${sc(l.t)}" cy="34" r="4.5" fill="${cvar(l.type)}"/>`}
   });
   if(S.day===startOfDay(Date.now())){const x=sc(Date.now());g+=`<line x1="${x}" x2="${x}" y1="4" y2="64" stroke="var(--primary)" stroke-width="1.6" stroke-dasharray="3 2"/>`}
   return `<div class="ribbon" aria-label="24小時作息圖"><svg viewBox="0 0 ${W} 78" role="img">${g}</svg>
@@ -1024,7 +1034,7 @@ function sumChart(){
   if(S.sumMode==='ml'){series=[['bmilk',d=>d.st.bmilk.ml],['formula',d=>d.st.formula.ml]];unit='ml'}
   else if(S.sumMode==='pump'){series=[['pump',d=>d.st.pump.ml]];unit='ml'}
   else if(S.sumMode==='breast'){series=[['breast',d=>Math.round((d.st.breast.L+d.st.breast.R)/60)]];unit='分鐘'}
-  else if(S.sumMode==='diaper'){series=[['pee',d=>d.st.dp.n-d.st.poop.n,'只有尿'],['poop',d=>d.st.poop.n,'有便便']];unit='片'}
+  else if(S.sumMode==='diaper'){series=[['pee',d=>d.st.dp.n-d.st.dp.extra,'尿／便換的'],['diaper',d=>d.st.dp.extra,'又尿下去・乾換']];unit='片'}
   else {series=[['sleep',d=>+(d.st.sleep/36e5).toFixed(1)]];unit='小時'}
   const tot=days.map(d=>series.reduce((s,[,f])=>s+f(d),0));
   let max=Math.max(...tot,1); const step=niceStep(max); max=Math.ceil(max/step)*step;
@@ -1054,16 +1064,16 @@ function sumChart(){
 function diaperTable(past){
   const today=startOfDay(Date.now()), rows=past.slice().reverse(), sum=f=>rows.reduce((s,d)=>s+f(d.st),0);
   return `<div class="sect"><h2>每日尿布片數</h2><span>點一天看明細</span></div>
-   <ul class="gl mlt"><li class="h"><span>日期</span><span>尿布</span><span>尿尿</span><span>便便</span><span>尿+便</span></li>
+   <ul class="gl mlt"><li class="h"><span>日期</span><span>尿布</span><span>尿尿</span><span>便便</span><span>多換</span></li>
    ${rows.map(d=>{const dd=new Date(d.d), st=d.st;
-     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${st.dp.n}</b> 片</span><span>${st.pee.n}</span><span>${st.poop.n}</span><span>${st.dp.both}</span></li>`}).join('')}
-   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum(s=>s.dp.n)}</b> 片</span><span>${sum(s=>s.pee.n)}</span><span>${sum(s=>s.poop.n)}</span><span>${sum(s=>s.dp.both)}</span></li></ul>
-   <p class="hint">尿尿和便便相隔 20 分鐘內算同一片（記便便時打開「同時也有尿尿」也是一片）。以每天 0:00–24:00 計算。</p>`;
+     return `<li data-act="goday" data-d="${d.d}" class="num${d.d===today?' now':''}"><span>${dd.getMonth()+1}/${dd.getDate()} ${d.d===today?'今天':WK[dd.getDay()]}</span><span><b>${st.dp.n}</b> 片</span><span>${st.pee.n}</span><span>${st.poop.n}</span><span>${st.dp.extra}</span></li>`}).join('')}
+   <li class="h tot num"><span>這 ${rows.length} 天合計</span><span><b>${sum(s=>s.dp.n)}</b> 片</span><span>${sum(s=>s.pee.n)}</span><span>${sum(s=>s.poop.n)}</span><span>${sum(s=>s.dp.extra)}</span></li></ul>
+   <p class="hint">尿布片數＝每筆記錄標的片數加總。「多換」是換的時候又尿下去多用的片數，加上沒尿也換的（乾換）。尿尿、便便欄是寶寶排了幾次，拿來看健康狀況。舊記錄沒標片數的，尿尿和便便相隔 20 分鐘內算同一片。</p>`;
 }
 function dpRecent(n){ // 最近 n 個完整的日子（不含今天）
   const today=startOfDay(Date.now()), out=[];
   for(let i=n;i>=1;i--){const d=today-i*DAY, inD=S.logs.filter(l=>l.t>=d&&l.t<d+DAY), c=diaperCount(inD);
-    out.push({d,n:c.n,both:c.both,pee:inD.filter(l=>l.type==='pee').length,poop:inD.filter(l=>l.type==='poop').length})}
+    out.push({d,n:c.n,both:c.both,extra:c.extra,pee:inD.filter(l=>l.type==='pee').length,poop:inD.filter(l=>l.type==='poop').length})}
   return out;
 }
 function dpLeft(){ const m=S.dpMeta||{}; if(!(m.stock>0)||!m.stockT) return null; return Math.max(0,m.stock-diaperCount(S.logs.filter(l=>l.t>=m.stockT)).n) }
@@ -1100,10 +1110,10 @@ async function runDiaperAI(){
   const a=age(Date.now()), w=[...S.growth].reverse().find(g=>g.w!=null&&g.w!=='');
   const payload={ageDays:a?a.day:null, ageText:a?a.txt:null, corrected:a&&a.corr, gestationWeeks:S.baby.ga||null, latestWeightKg:w?+w.w:null, weightDate:w?w.d:null, birthKg:S.baby.bw||null,
     feeding:S.baby.feedMode||null, stockLeft:dpLeft(),
-    days:days.map(d=>{const dd=new Date(d.d);return {date:`${dd.getMonth()+1}/${dd.getDate()}`,diapers:d.n,pee:d.pee,poop:d.poop,peeAndPoopSameDiaper:d.both}})};
-  const prompt=`你是台灣的兒科護理師。以下是一位寶寶最近每天的尿布記錄（diapers＝實際用掉的片數，尿尿和便便同一片只算一片），以及月齡、體重、家裡剩下的片數。
+    days:days.map(d=>{const dd=new Date(d.d);return {date:`${dd.getMonth()+1}/${dd.getDate()}`,diapers:d.n,pee:d.pee,poop:d.poop,sameDiaper:d.both,extraChanges:d.extra}})};
+  const prompt=`你是台灣的兒科護理師。以下是一位寶寶最近每天的尿布記錄（diapers＝實際用掉的片數；pee/poop＝寶寶排了幾次；sameDiaper＝尿和便共用同一片的筆數；extraChanges＝換的時候又尿下去多用的、或沒尿也換的片數），以及月齡、體重、家裡剩下的片數。
 請判斷這個家庭接下來要準備多少尿布，用繁體中文、台灣用語回答：
-- 以實際記錄的日均為主，再依月齡調整（新生兒一天約 8–12 片，之後逐漸減少；記錄可能漏記夜間換尿布，可酌量加 1–2 片緩衝）。
+- 以實際記錄的 diapers 日均為主（extraChanges 已含在 diapers 裡，不要重複加），再依月齡調整（新生兒一天約 8–12 片，之後逐漸減少；記錄可能漏記夜間換尿布，可酌量加 1–2 片緩衝）。
 - 依體重建議尺寸（台灣常見 NB/S/M/L），體重接近換尺寸時提醒不要一次買太多。
 - 有 stockLeft 時，算出還能撐幾天、建議何時補、補多少包（一包約 60–90 片）。
 - 若尿布片數偏少（滿 5 天後 24 小時少於 6 片濕尿布）放進 watch 提醒就醫評估；沒有就給空陣列。
@@ -1648,7 +1658,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) notifyDu
 /* ───────── tray ───────── */
 const TRAY_DEF=['bmilk','formula','pump','pee','poop'];
 function trayOrder(){ return TRAY_DEF.concat(ORDER.filter(t=>!TRAY_DEF.includes(t))) }
-const TYPE_GROUPS=[['餵食',['bmilk','formula','pump','solid','breast']],['排泄與睡眠',['pee','poop','sleep']],['健康',['temp','sick','med']],['日常',['awake','mood','bath','event']]];
+const TYPE_GROUPS=[['餵食',['bmilk','formula','pump','solid','breast']],['排泄與睡眠',['pee','poop','diaper','sleep']],['健康',['temp','sick','med']],['日常',['awake','mood','bath','event']]];
 function drawMore(){
   document.getElementById('modal').innerHTML=`<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="記錄類型">
    <div class="grab"></div><div class="sh-hd"><span class="badge" style="--c:var(--primary)">${ic('plus')}</span><h3>要記錄什麼？</h3><button class="x" data-act="close" aria-label="關閉">${ic('x')}</button></div>
@@ -1718,6 +1728,14 @@ function drawSheet(confirming){
     body+=`<div class="card"><div class="stepper mls" style="--c:${cvar(type)}"><button data-act="ml" data-d="-10" aria-label="減少10ml">−10</button><button class="s5" data-act="ml" data-d="-5" aria-label="減少5ml">−5</button><div class="v num"><span id="f-ml">${ml}</span><small>ml</small></div><button class="s5" data-act="ml" data-d="5" aria-label="增加5ml">+5</button><button data-act="ml" data-d="10" aria-label="增加10ml">+10</button></div>
       <div class="pills" style="justify-content:center">${(type==='pump'?[40,60,80,100,120,150,200]:[30,60,90,120,150,180,210]).map(v=>`<button class="pill" style="--c:${cvar(type)}" data-setml="${v}" aria-pressed="${+ml===v}">${v}</button>`).join('')}</div>${type!=='pump'?`<div class="timer-opts" style="margin:12px 0 0"><span>加入寶乖亞</span><button class="toggle" style="--c-breast:${cvar(type)}" data-act="bgy" aria-pressed="${!!rec.bgy}" aria-label="加入寶乖亞"></button></div>`:''}</div>`+timeField('f-t','時間',rec.t);
   }
+  if(type==='pee'||type==='poop'||type==='diaper'){
+    const k=rec.dp==null?1:+rec.dp;
+    body+=`<div class="card"><span class="lbl">${type==='diaper'?'換了幾片':'這次用了幾片尿布'}</span><div class="stepper" style="--c:${cvar(type==='diaper'?'diaper':type)}"><button data-act="dp" data-d="-1" aria-label="少一片">−</button><div class="v num"><span id="f-dp">${k}</span><small>片</small></div><button data-act="dp" data-d="1" aria-label="多一片">+</button></div>
+      <p class="hint" id="f-dph">${dpHint(type,k)}</p></div>`;
+  }
+  if(type==='diaper'){
+    body+=`<div class="card"><span class="lbl">為什麼換（選填）</span><div class="pills">${DP_WHY.map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="why" data-v="${a}" aria-pressed="${rec.why===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
+  }
   if(type==='pee'){
     body+=`<div class="card"><span class="lbl">尿量</span><div class="pills">${AMOUNT.map(a=>`<button class="pill" style="--c:var(--c-pee)" data-pick="amt" data-v="${a}" aria-pressed="${rec.amt===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
   }
@@ -1783,11 +1801,16 @@ function drawSheet(confirming){
       <p class="hint">依醫師或藥師指示的劑量與間隔使用。</p></div>`+timeField('f-t','時間',rec.t);
   }
   body+=`<div class="card"><label class="lbl" for="f-note">備註</label><textarea class="field" id="f-note" rows="2" placeholder="例如：吃完有打嗝、哭了 10 分鐘">${esc(rec.note||'')}</textarea></div>`;
-  const foot = S.readOnly?'<p class="hint warn">你目前只能查看，無法儲存。</p>':
+  const ask=cur.ask?`<div class="card" style="border:2px solid var(--c-diaper)"><p style="margin:0 0 10px;font-size:15px">${hm(cur.ask.t)} 已經記了一筆${TYPES[cur.ask.type].n}，<b>這次是同一片尿布嗎？</b></p><div class="confirm" style="margin:0"><button data-act="dpdiff">不是，另換一片</button><button class="yes" style="background:var(--c-diaper)" data-act="dpsame">是，同一片</button></div></div>`:'';
+  const foot = S.readOnly?'<p class="hint warn">你目前只能查看，無法儲存。</p>':ask?ask:
    `<button class="save" style="--c:${cvar(type)}" data-act="save">${ic('check')}${isNew?'記錄':'儲存修改'}</button>`+
    (!isNew?(confirming?`<div class="confirm"><button data-act="cancelDel">取消</button><button class="yes" data-act="doDel">確定刪除</button></div>`:`<button class="del" data-act="askDel">刪除這筆記錄</button>`):'');
   document.getElementById('modal').innerHTML=`<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="${T.n}">
     <div class="grab"></div><div class="sh-hd">${badge(type)}<h3>${T.n}</h3><button class="x" data-act="close" aria-label="關閉">${ic('x')}</button></div>${body}${foot}</div></div>`;
+}
+function dpHint(type,k){
+  if(type==='diaper') return '沒有尿尿或便便、但換了尿布時記這個（例如出門前、乾的也換）。';
+  return k===0?'跟另一筆共用同一片，不另外算。':k>1?`換的時候又尿下去／又便了，算 ${k} 片。`:'換的時候又尿下去、多用了一片，就按 +。';
 }
 function p_warn(k){return k==='pale'?'灰白／淡黃便可能是膽道閉鎖的警訊，請盡快帶寶寶就醫並帶著大便照片。':k==='black'?'出生頭幾天的胎便是黑綠色屬正常；之後若仍為黑色，請諮詢醫師。':'便便帶血請拍照並諮詢醫師。'}
 function logPhotoBlock(rec){
@@ -1830,6 +1853,18 @@ async function doSave(){
   }
   if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml); if(r.bgy) out.bgy=true}
   if(type==='pump'){out.ml=+document.getElementById('f-ml').textContent; if(!out.ml){toast('請填擠奶量');return} ls('bl_last_pump',out.ml)}
+  if(DPT(type)){
+    const k=r.dp==null?1:+r.dp;
+    if(type==='diaper'){ out.dp=k; if(r.why) out.why=r.why; if(!k){toast('至少 1 片');return} }
+    else if(r.dp!=null||!r.id){
+      out.dp=k;
+      if(!r.id&&k>0&&r.dpAns==null){ // 新記錄：20 分鐘內已有另一筆尿尿／便便 → 問是不是同一片
+        const t0=r.t||Date.now(), near=S.logs.filter(l=>(l.type==='pee'||l.type==='poop')&&l.dp!==0&&Math.abs(l.t-t0)<=DP_GAP).sort((a,b)=>Math.abs(a.t-t0)-Math.abs(b.t-t0))[0];
+        if(near){ cur.ask={t:near.t,type:near.type}; drawSheet(); const q=document.querySelector('[data-act="dpsame"]'); if(q) q.closest('.card').scrollIntoView({block:'end',behavior:'smooth'}); return }
+      }
+      if(r.dpAns==='same') out.dp=Math.max(0,k-1);
+    }
+  }
   if(type==='pee'&&r.amt) out.amt=r.amt;
   if(type==='poop'){['color','tex','amt'].forEach(k=>{if(r[k])out[k]=r[k]})}
   if(type==='sleep'){out.end=r.end||null; if(out.end&&out.end<out.t){toast('起床時間要晚於入睡時間');return}}
@@ -1845,7 +1880,7 @@ async function doSave(){
   const ok=await saveLog(out); if(!ok) return;
   if(r._removed&&r._removed.length) dropAssets(r._removed);
   r._fresh=null;
-  if(type==='poop'&&!r.id&&r.withPee) await saveLog({type:'pee',t:out.t});
+  if(type==='poop'&&!r.id&&r.withPee) await saveLog({type:'pee',t:out.t,dp:0});
   if(type==='breast'&&!r.id) resetTimer();
   closeSheet(); toast(`已記錄${TYPES[type].n} ${hm(out.t)}`);
   if(S.day!==startOfDay(out.t) && out.t<Date.now()) {S.day=startOfDay(out.t)}
@@ -1920,6 +1955,9 @@ document.addEventListener('click',async e=>{
     case 'alarmtog': {const t=timer();t.alarmOn=!t.alarmOn;setTimer(t);a.setAttribute('aria-pressed',t.alarmOn);break}
     case 'bgy': cur.rec.bgy=!cur.rec.bgy; a.setAttribute('aria-pressed',!!cur.rec.bgy); break;
     case 'withpee': cur.rec.withPee=!cur.rec.withPee; a.setAttribute('aria-pressed',cur.rec.withPee); break;
+    case 'dp': { const el=document.getElementById('f-dp'); const v=Math.max(0,Math.min(6,+el.textContent+ +a.dataset.d)); el.textContent=v; cur.rec.dp=v; const h=document.getElementById('f-dph'); if(h) h.textContent=dpHint(cur.type,v); break }
+    case 'dpsame': cur.rec.dpAns='same'; cur.ask=null; doSave(); break;
+    case 'dpdiff': cur.rec.dpAns='diff'; cur.ask=null; doSave(); break;
     case 'ml': {const el=document.getElementById('f-ml');el.textContent=Math.max(0,+el.textContent+ +a.dataset.d);document.querySelectorAll('[data-setml]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.setml===el.textContent));break}
     case 'tc': {const el=document.getElementById('f-c');el.textContent=Math.min(42,Math.max(34,+el.textContent+ +a.dataset.d)).toFixed(1);break}
     case 'save': doSave(); break;
