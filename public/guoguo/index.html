@@ -562,7 +562,9 @@ const POOP_COLORS = [
   {k:'black',n:'黑色',hex:'#2B2522',warn:true},{k:'red',n:'帶血絲',hex:'#C8403F',warn:true}];
 const POOP_TEX = ['水狀','稀糊','軟糊','條狀','硬粒'];
 const AMOUNT = ['少','中','多'];
-const DP_WHY = ['沒尿（乾的）','出門前','洗澡前後','睡前','漏出來了','其他'];
+const DP_WHY = ['沒尿（乾的）','出門前','洗澡前後','睡前','其他'];
+const DP_LEAK = ['漏尿','漏便','尿便都漏'];
+const DP_BRAND = ['奢寵幫','一級幫','滿意寶寶','其他'];
 const AWAKE_MOOD=['安靜滿足','開心有笑','有點煩躁','哭鬧'], AWAKE_SELF=['可以自己玩','要人陪','要抱著'], AWAKE_TAG=['看黑白卡','排氣操','發呆','趴趴練習','說話唱歌','搖鈴玩具','照鏡子','撫觸按摩','外出散步'];
 const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
 const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
@@ -967,6 +969,7 @@ function itemRow(l){
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
   if(l.type==='awake'){v=[l.calm,l.self,l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.calm==='哭鬧') flag='哭鬧'; if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='diaper'){v=`${l.dp==null?1:l.dp} 片`; if(l.why) meta.push(esc(l.why))}
+  if(DPT(l.type)){ if(l.leak) flag=l.leak; if(l.brand) meta.push(esc(l.brand)) }
   if((l.type==='pee'||l.type==='poop')&&l.dp!=null){ if(+l.dp===0) meta.push('同一片尿布'); else if(+l.dp>1) meta.push(`用了 ${l.dp} 片`) }
   if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
@@ -1073,10 +1076,17 @@ function diaperTable(past){
 function dpRecent(n){ // 最近 n 個完整的日子（不含今天）
   const today=startOfDay(Date.now()), out=[];
   for(let i=n;i>=1;i--){const d=today-i*DAY, inD=S.logs.filter(l=>l.t>=d&&l.t<d+DAY), c=diaperCount(inD);
-    out.push({d,n:c.n,both:c.both,extra:c.extra,pee:inD.filter(l=>l.type==='pee').length,poop:inD.filter(l=>l.type==='poop').length})}
+    const bd={}; inD.filter(l=>DPT(l.type)&&l.brand&&!(l.type!=='diaper'&&+l.dp===0)).forEach(l=>{bd[l.brand]=(bd[l.brand]||0)+(l.dp==null?1:+l.dp)});
+    out.push({d,n:c.n,both:c.both,extra:c.extra,leak:inD.filter(l=>DPT(l.type)&&l.leak).length,brands:bd,pee:inD.filter(l=>l.type==='pee').length,poop:inD.filter(l=>l.type==='poop').length})}
   return out;
 }
 function dpLeft(){ const m=S.dpMeta||{}; if(!(m.stock>0)||!m.stockT) return null; return Math.max(0,m.stock-diaperCount(S.logs.filter(l=>l.t>=m.stockT)).n) }
+function dpUsage(){
+  const r=dpRecent(7), leak=r.reduce((t,d)=>t+d.leak,0), tot={}; r.forEach(d=>Object.entries(d.brands).forEach(([k,v])=>tot[k]=(tot[k]||0)+v));
+  const bs=Object.entries(tot).sort((a,b)=>b[1]-a[1]);
+  if(!leak&&!bs.length) return '';
+  return `<p class="hint" style="margin-top:12px">${leak?`近 7 天漏了 <b>${leak}</b> 次${leak>=3?'，漏得有點多，可以檢查尺寸或穿法':''}。`:'近 7 天沒有漏。'}${bs.length?`<br>各品牌用量：${bs.map(([k,v])=>`${esc(k)} ${v} 片`).join('、')}`:''}</p>`;
+}
 function diaperPlan(){
   const m=S.dpMeta||{}, rec=dpRecent(7).filter(d=>d.n>0), avg=rec.length?rec.reduce((s,d)=>s+d.n,0)/rec.length:0;
   const left=dpLeft(), ai=m.ai&&m.ai.r;
@@ -1084,6 +1094,7 @@ function diaperPlan(){
   return `<div class="sect"><h2>尿布用量與備貨</h2></div>
    <div class="card">
     <div class="avg" style="margin:0"><div><b class="num">${avg?avg.toFixed(1):'—'}</b><small>近 ${rec.length||7} 天日均（片）</small></div><div><b class="num">${avg?Math.round(avg*7):'—'}</b><small>一週約需</small></div><div><b class="num">${avg?Math.round(avg*30):'—'}</b><small>一個月約需</small></div></div>
+    ${dpUsage()}
     <label class="lbl" for="dp-stock" style="margin-top:14px">家裡現在還有幾片</label>
     <div class="row"><input class="field num" id="dp-stock" type="number" inputmode="numeric" min="0" placeholder="例如 120" value=""><button class="btn2" data-act="dpstock" style="flex:none">更新庫存</button></div>
     ${left!=null?`<p class="hint" style="margin-top:8px">${new Date(m.stockT).getMonth()+1}/${new Date(m.stockT).getDate()} 登記 ${m.stock} 片，之後用掉 ${m.stock-left} 片，<b>剩約 ${left} 片</b>${days!=null?`，照目前用量大約還能撐 <b>${days} 天</b>${days<=3?'，該補貨了':''}`:''}。</p>`:'<p class="hint" style="margin-top:8px">填上庫存後，每記一片就會自動扣，算出還能撐幾天。</p>'}
@@ -1110,11 +1121,12 @@ async function runDiaperAI(){
   const a=age(Date.now()), w=[...S.growth].reverse().find(g=>g.w!=null&&g.w!=='');
   const payload={ageDays:a?a.day:null, ageText:a?a.txt:null, corrected:a&&a.corr, gestationWeeks:S.baby.ga||null, latestWeightKg:w?+w.w:null, weightDate:w?w.d:null, birthKg:S.baby.bw||null,
     feeding:S.baby.feedMode||null, stockLeft:dpLeft(),
-    days:days.map(d=>{const dd=new Date(d.d);return {date:`${dd.getMonth()+1}/${dd.getDate()}`,diapers:d.n,pee:d.pee,poop:d.poop,sameDiaper:d.both,extraChanges:d.extra}})};
-  const prompt=`你是台灣的兒科護理師。以下是一位寶寶最近每天的尿布記錄（diapers＝實際用掉的片數；pee/poop＝寶寶排了幾次；sameDiaper＝尿和便共用同一片的筆數；extraChanges＝換的時候又尿下去多用的、或沒尿也換的片數），以及月齡、體重、家裡剩下的片數。
+    days:days.map(d=>{const dd=new Date(d.d);return {date:`${dd.getMonth()+1}/${dd.getDate()}`,diapers:d.n,pee:d.pee,poop:d.poop,sameDiaper:d.both,extraChanges:d.extra,leaks:d.leak,byBrand:d.brands}})};
+  const prompt=`你是台灣的兒科護理師。以下是一位寶寶最近每天的尿布記錄（diapers＝實際用掉的片數；pee/poop＝寶寶排了幾次；sameDiaper＝尿和便共用同一片的筆數；extraChanges＝換的時候又尿下去多用的、或沒尿也換的片數）（leaks＝漏尿／漏便的次數；byBrand＝各品牌用掉的片數），以及月齡、體重、家裡剩下的片數。
 請判斷這個家庭接下來要準備多少尿布，用繁體中文、台灣用語回答：
 - 以實際記錄的 diapers 日均為主（extraChanges 已含在 diapers 裡，不要重複加），再依月齡調整（新生兒一天約 8–12 片，之後逐漸減少；記錄可能漏記夜間換尿布，可酌量加 1–2 片緩衝）。
 - 依體重建議尺寸（台灣常見 NB/S/M/L），體重接近換尺寸時提醒不要一次買太多。
+- 漏尿漏便偏多（近一週 3 次以上）時，在 size 建議考慮換大一號或調整穿法；若某品牌漏的比較多，在 reason 點出來。依各品牌實際用量，在 buy 說明每個品牌各要補多少。
 - 有 stockLeft 時，算出還能撐幾天、建議何時補、補多少包（一包約 60–90 片）。
 - 若尿布片數偏少（滿 5 天後 24 小時少於 6 片濕尿布）放進 watch 提醒就醫評估；沒有就給空陣列。
 只回覆 JSON：{"perDay":數字,"week":數字,"month":數字,"size":"一句話","buy":"一句話","reason":"一句話","watch":["…"]}
@@ -1704,6 +1716,7 @@ function openSheet(type, rec){
   cur={type, rec:rec?{...rec}:{type,t:Date.now()}};
   if(type==='sleep'&&!rec){ cur.rec.end=null }
   if(type==='poop'&&!rec){ cur.rec.withPee=true }
+  if(DPT(type)&&!rec){ const b=ls('bl_brand'); if(DP_BRAND.includes(b)) cur.rec.brand=b }
   drawSheet();
 }
 function drawSheet(confirming){
@@ -1732,6 +1745,10 @@ function drawSheet(confirming){
     const k=rec.dp==null?1:+rec.dp;
     body+=`<div class="card"><span class="lbl">${type==='diaper'?'換了幾片':'這次用了幾片尿布'}</span><div class="stepper" style="--c:${cvar(type==='diaper'?'diaper':type)}"><button data-act="dp" data-d="-1" aria-label="少一片">−</button><div class="v num"><span id="f-dp">${k}</span><small>片</small></div><button data-act="dp" data-d="1" aria-label="多一片">+</button></div>
       <p class="hint" id="f-dph">${dpHint(type,k)}</p></div>`;
+  }
+  if(DPT(type)){
+    body+=`<div class="card"><span class="lbl">有漏出來嗎？（沒漏不用選）</span><div class="pills">${DP_LEAK.map(a=>`<button class="pill" style="--c:var(--c-temp)" data-pick="leak" data-v="${a}" aria-pressed="${rec.leak===a}">${a}</button>`).join('')}</div>
+      <span class="lbl" style="margin-top:12px">尿布品牌</span><div class="pills">${DP_BRAND.map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="brand" data-v="${a}" aria-pressed="${rec.brand===a}">${a}</button>`).join('')}</div></div>`;
   }
   if(type==='diaper'){
     body+=`<div class="card"><span class="lbl">為什麼換（選填）</span><div class="pills">${DP_WHY.map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="why" data-v="${a}" aria-pressed="${rec.why===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
@@ -1854,6 +1871,7 @@ async function doSave(){
   if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml); if(r.bgy) out.bgy=true}
   if(type==='pump'){out.ml=+document.getElementById('f-ml').textContent; if(!out.ml){toast('請填擠奶量');return} ls('bl_last_pump',out.ml)}
   if(DPT(type)){
+    if(r.leak) out.leak=r.leak; if(r.brand){ out.brand=r.brand; ls('bl_brand',r.brand) }
     const k=r.dp==null?1:+r.dp;
     if(type==='diaper'){ out.dp=k; if(r.why) out.why=r.why; if(!k){toast('至少 1 片');return} }
     else if(r.dp!=null||!r.id){
