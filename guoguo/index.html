@@ -963,7 +963,7 @@ function itemRow(l){
   if(l.type==='pee'&&l.amt){v=l.amt}
   if(l.type==='poop'){const pc=POOP_COLORS.find(p=>p.k===l.color); v=[pc&&pc.n,l.tex,l.amt].filter(Boolean).join('・'); if(pc&&pc.warn) flag='請留意'}
   if(l.type==='sleep'){ if(l.end){v=dur(l.end-l.t); meta.push(`${hm(l.t)}–${hm(l.end)}`)} else {v='睡覺中 '+dur(Date.now()-l.t); extra=`<button class="wake" data-act="wake" data-id="${l.id}">起床</button>`} }
-  if(l.type==='temp'){v=`${(+l.c).toFixed(1)}°C`; if(l.c>=38) flag='發燒'; else if(l.c>=37.5) flag='偏高'}
+  if(l.type==='temp'){v=`${(+l.c).toFixed(1)}°C`; if(l.c>=38) flag='發燒'; else if(l.c>=37.5) flag='偏高'; if(l.site) meta.push(esc(l.site))}
   if(l.type==='mood'&&l.tags&&l.tags.length){v=l.tags.join('、')}
   if(l.type==='solid'){v=[l.food,l.qty].filter(Boolean).join(' '); if(l.react&&l.react!=='沒有異常'){flag=l.react}}
   if(l.type==='med'){v=[l.drug,l.dose].filter(Boolean).join(' ')}
@@ -1770,7 +1770,7 @@ function drawSheet(confirming){
   if(type==='temp'){
     const c=rec.c??36.8;
     body+=`<div class="card"><div class="stepper" style="--c:var(--c-temp)"><button data-act="tc" data-d="-0.1" aria-label="降低0.1度">−</button><div class="v num"><span id="f-c">${(+c).toFixed(1)}</span><small>°C</small></div><button data-act="tc" data-d="0.1" aria-label="增加0.1度">+</button></div>
-      <div class="pills" style="justify-content:center">${['耳溫','額溫','腋溫','肛溫'].map(a=>`<button class="pill" style="--c:var(--c-temp)" data-pick="site" data-v="${a}" aria-pressed="${rec.site===a}">${a}</button>`).join('')}</div>
+      <div class="pills" style="justify-content:center">${['耳溫','額溫','腋溫','脖溫','肛溫'].map(a=>`<button class="pill" style="--c:var(--c-temp)" data-pick="site" data-v="${a}" aria-pressed="${rec.site===a}">${a}</button>`).join('')}</div>
       <p class="hint ${c>=38?'warn':''}">${c>=38?'38°C 以上為發燒；未滿 3 個月的寶寶發燒請立即就醫。':'量完立刻記錄，方便看體溫變化。'}</p></div>`+timeField('f-t','時間',rec.t);
   }
   if(type==='mood'){
