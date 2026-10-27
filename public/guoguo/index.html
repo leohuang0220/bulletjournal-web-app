@@ -632,6 +632,12 @@ function dateLabel(t){const d=new Date(t);return `${d.getMonth()+1}月${d.getDat
 let fb=null, famRef=null, me=null, subs=[];
 function fbReady(){ return !!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) }
 async function initStore(){
+  // 設定了雲端、但 Google 的雲端套件還沒載入（第一次安裝／網路不穩）：不要退回空白的單機模式
+  if(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey&&!window.firebase){
+    showGate('loading');
+    for(let i=0;i<20&&!window.firebase;i++) await new Promise(r=>setTimeout(r,500));
+    if(!window.firebase){ showGate('offline'); return }
+  }
   if(!fbReady()){ // not configured yet: work on this device only
     S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.dpMeta = ls('bl_diaper')||{}; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
@@ -715,6 +721,8 @@ function showGate(kind){
   let body='';
   if(kind==='login') body=`<h2>果果日記</h2><p class="lead">用 Google 帳號登入，爸爸媽媽的記錄會自動同步。</p>
      <button class="gbtn" data-gate="login">${gsvg}用 Google 登入</button>${inApp()?`<p class="hint warn" style="margin-top:14px">你現在是在 ${inApp()} 裡開啟，這裡登入不會被記住。請點右上角「⋯」選「用瀏覽器開啟」，或直接從手機主畫面的果果日記圖示打開。</p>`:''}`;
+  else if(kind==='offline') body=`<h2>連不上雲端</h2><p class="lead">果果日記的資料都還在雲端，沒有不見。請確認手機有網路（Wi-Fi 或行動網路），再按「重試」。</p>
+     <button class="gbtn" data-gate="retry">重試</button>`;
   else if(kind==='loading') body=`<h2>果果日記</h2><p class="lead">正在打開日記…</p>`;
   else if(kind==='nofamily') body=`<h2>嗨，${esc(me.displayName||'')}</h2><p class="lead">這個帳號（${esc(me.email||'')}）還沒有日記。</p>
      <button class="gbtn" data-gate="create">${ic('plus')}建立新的果果日記</button>
@@ -732,6 +740,7 @@ document.addEventListener('click',async e=>{
   if(k==='login'){ const p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
     try{ await firebase.auth().signInWithPopup(p) }catch(err){ if(err.code==='auth/popup-blocked'||err.code==='auth/operation-not-supported-in-this-environment'){ firebase.auth().signInWithRedirect(p) } else gateMsg(authMsg(err)) } }
   if(k==='create'){ b.disabled=true; try{ await createFamily() }catch(err){ gateMsg('建立失敗：'+(err.code||err.message)); b.disabled=false } }
+  if(k==='retry'){ location.reload(); return }
   if(k==='recheck'){ showGate('loading'); await findFamily() }
   if(k==='logout'){ ls('bl_cache',null); await firebase.auth().signOut() }
 });
