@@ -689,17 +689,17 @@ function attachFamily(ref,fromCache){
   famRef=ref; S.mode='db'; S.booting=false; hideGate();
   db={collection:p=>famRef.collection(p), doc:p=>{const [c,d]=p.split('/');return famRef.collection(c).doc(d)}};
   const fsErr=e=>{console.warn(e); if(e&&e.code==='permission-denied'){toast('你已不在這本日記的成員名單中');}};
-  subs.push(famRef.onSnapshot(s=>{ saveCache(); const d=s.data()||{}; S.fam=d; S.names=d.members||{};
+  subs.push(famRef.onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; saveCache(); const d=s.data()||{}; S.fam=d; S.names=d.members||{};
     if(me&&!(d.members||{})[me.uid]) famRef.update({['members.'+me.uid]:me.displayName||me.email}).catch(()=>{});
     if(!document.querySelector('.scrim')) render() },e=>{ if(fromCache&&e&&e.code==='permission-denied'){ ls('bl_cache',null); subs.forEach(f=>f()); subs=[]; famRef=null; S.mode=undefined; showGate('loading'); findFamily(); return } fsErr(e) }));
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
-    S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; render(); saveCache(); },fsErr));
+    S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; if(!snap.metadata.fromCache){S.logsLoaded=true; maybeOnboard()} render(); saveCache(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
   subs.push(db.doc('meta/push').onSnapshot(s=>{ S.pushKey=s.exists?s.data().publicKey:''; S.pushLast=s.exists?s.data().lastSummary:null; if(S.tab==='set'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/diaper').onSnapshot(s=>{ S.dpMeta=s.exists?s.data():{}; if(S.tab==='sum'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
-  subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
+  subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; /* 手機上還沒有資料時，等雲端回覆，不要當成新寶寶 */ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyMissing=!s.exists; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   moneyAttach(); window.cryAttach&&cryAttach();
   assetsCap={
@@ -844,7 +844,7 @@ function predict(){
 function rel(ms){const m=Math.round(Math.abs(ms)/6e4);if(m<1)return '剛剛';return dur(Math.abs(ms))}
 async function saveBaby(b){
   S.baby={...S.baby,...b};
-  if(S.mode==='db'){ try{ await db.doc('meta/baby').set(S.baby) }catch(e){writeErr(e)} } else ls('bl_baby',S.baby);
+  if(S.mode==='db'){ try{ await db.doc('meta/baby').set(b,{merge:true}) }catch(e){writeErr(e)} } else ls('bl_baby',S.baby);
   render();
 }
 function logsInRange(a,b){
@@ -1411,6 +1411,7 @@ let ob=null;
 function maybeOnboard(){
   if(ob||S.baby.onboarded||S.readOnly) return;
   if(S.baby.birth||S.logs.length){ return } // already in use: don't interrupt
+  if(S.mode==='db'&&!(S.babyMissing&&S.logsLoaded)) return; // 雲端確認沒有寶寶資料、也沒有任何記錄，才算新日記
   startOnboard();
 }
 function startOnboard(){

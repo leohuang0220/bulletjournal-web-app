@@ -1,5 +1,5 @@
 // 果果日記離線快取：頁面與圖示先存；資料由 Firebase 自己離線同步
-const CACHE = 'guoguo-v37';
+const CACHE = 'guoguo-v38';
 const CORE = ['./', './index.html', './config.js', './money.js', './cry.js', './app.webmanifest', './icons/c-icon-192.png', './icons/c-icon-512.png', './icons/c-apple-touch-icon.png', './icons/face.jpg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
