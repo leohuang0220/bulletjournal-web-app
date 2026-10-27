@@ -689,9 +689,10 @@ function attachFamily(ref,fromCache){
   famRef=ref; S.mode='db'; S.booting=false; hideGate();
   db={collection:p=>famRef.collection(p), doc:p=>{const [c,d]=p.split('/');return famRef.collection(c).doc(d)}};
   const fsErr=e=>{console.warn(e); if(e&&e.code==='permission-denied'){toast('你已不在這本日記的成員名單中');}};
-  subs.push(famRef.onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; saveCache(); const d=s.data()||{}; S.fam=d; S.names=d.members||{};
+  S.famDiag={st:'wait'};
+  subs.push(famRef.onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; saveCache(); const d=s.data()||{}; S.fam=d; S.famDiag={st:s.exists?'ok':'missing',cache:s.metadata.fromCache,keys:Object.keys(d).length,em:(d.emails||[]).length}; S.names=d.members||{};
     if(me&&!(d.members||{})[me.uid]) famRef.update({['members.'+me.uid]:me.displayName||me.email}).catch(()=>{});
-    if(!document.querySelector('.scrim')) render() },e=>{ if(fromCache&&e&&e.code==='permission-denied'){ ls('bl_cache',null); subs.forEach(f=>f()); subs=[]; famRef=null; S.mode=undefined; showGate('loading'); findFamily(); return } fsErr(e) }));
+    if(!document.querySelector('.scrim')) render() },e=>{ S.famDiag={st:'err',code:e&&(e.code||e.message)}; if(!document.querySelector('.scrim')) render(); if(fromCache&&e&&e.code==='permission-denied'){ ls('bl_cache',null); subs.forEach(f=>f()); subs=[]; famRef=null; S.mode=undefined; showGate('loading'); findFamily(); return } fsErr(e) }));
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; if(!snap.metadata.fromCache){S.logsLoaded=true; maybeOnboard()} render(); saveCache(); },fsErr));
   subs.push(db.collection('growth').orderBy('d').onSnapshot(snap=>{S.growth=snap.docs.map(d=>({id:d.id,...d.data()}));render()},fsErr));
@@ -1217,11 +1218,16 @@ function familyCard(){
   if(!famRef) return '';
   const ems=(S.fam&&S.fam.emails)||[], mine=(me&&me.email||'').toLowerCase();
   return `<div class="sect"><h2>一起記錄的家人</h2><span>${ems.length} 人</span></div>
-   <div class="card">${ems.map(em=>`<div class="mem"><span>${esc(em)}${em===mine?'（你）':''}</span>${em!==mine?`<button data-act="rmmem" data-em="${esc(em)}">移除</button>`:''}</div>`).join('')}
+   <div class="card">${!ems.length?famDiagHtml():''}${ems.map(em=>`<div class="mem"><span>${esc(em)}${em===mine?'（你）':''}</span>${em!==mine?`<button data-act="rmmem" data-em="${esc(em)}">移除</button>`:''}</div>`).join('')}
    <label class="lbl" for="s-mem" style="margin-top:12px">加入另一半的 Gmail</label>
    <div class="row"><input class="field" id="s-mem" type="email" inputmode="email" autocomplete="off" placeholder="name@gmail.com"><button class="btn2" data-act="addmem" style="flex:none">加入</button></div>
    <p class="hint">對方用這個 Gmail 登入果果日記，就會看到同一本日記，兩支手機即時同步。</p>
    <button class="btn2" data-act="logout" style="margin-top:10px">登出 ${esc(me&&me.email||'')}</button></div>`;
+}
+function famDiagHtml(){
+  const g=S.famDiag||{}, fid=famRef?famRef.id.slice(0,6):'';
+  const why=g.st==='wait'?'家人名單還在讀取中…':g.st==='err'?`家人名單讀取失敗（${esc(g.code||'')}）`:g.st==='missing'?'雲端找不到這本日記的主檔':`主檔讀到了，但裡面沒有家人名單（欄位 ${g.keys} 個${g.cache?'，手機暫存':''}）`;
+  return `<p class="hint warn" style="margin-top:0">${why}　代號 ${esc(fid)}</p><button class="btn2" data-act="famreload" style="margin-bottom:10px">重新讀取家人名單</button>`;
 }
 function viewSet(){
   return header(`<div class="datenav"><span></span><div class="d">設定</div><span></span></div>`)+
@@ -1952,6 +1958,7 @@ document.addEventListener('click',async e=>{
   switch(act){
     case 'dpstock': { const v=+grab('dp-stock'); if(!(v>=0)||grab('dp-stock')===''){toast('請填片數');return} await dpSaveMeta({stock:v,stockT:Date.now()}); toast('庫存已更新'); break }
     case 'dpai': runDiaperAI(); break;
+    case 'famreload': { if(!famRef) break; try{ const s=await famRef.get({source:'server'}); const d=s.data()||{}; S.fam=d; S.names=d.members||{}; S.famDiag={st:s.exists?'ok':'missing',cache:false,keys:Object.keys(d).length,em:(d.emails||[]).length}; toast(s.exists?`讀到 ${(d.emails||[]).length} 位家人`:'雲端找不到主檔') }catch(e){ S.famDiag={st:'err',code:e.code||e.message}; toast('讀取失敗：'+(e.code||e.message)) } render(); break }
     case 'goday': S.day=+a.dataset.d; S.tab='log'; render(); window.scrollTo(0,0); break;
     case 'pushon': pushEnable(); break;
     case 'pushoff': pushDisable(); break;
