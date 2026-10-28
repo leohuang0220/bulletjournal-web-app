@@ -1,3 +1,5 @@
+process.on('unhandledRejection',e=>{console.log('::error::unhandled '+String(e&&e.message||e).split('\n').slice(0,3).join(' | '));process.exit(1)});
+process.on('uncaughtException',e=>{console.log('::error::uncaught '+String(e&&e.message||e).split('\n').slice(0,3).join(' | '));process.exit(1)});
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
 import fs from 'fs';

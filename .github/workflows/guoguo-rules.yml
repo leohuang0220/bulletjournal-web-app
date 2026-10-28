@@ -27,7 +27,7 @@ jobs:
           java-version: 21
       - run: npm install --no-audit --no-fund
       - name: 在模擬雲端測試規則
-        run: npx firebase emulators:exec --only firestore --project demo-gg "node test.mjs"
+        run: npx firebase emulators:exec --only firestore --project demo-gg "node test.mjs" > out.txt 2>&1; c=$?; grep -E "FAIL|Error|error" out.txt | head -8 | sed "s/^/::notice::/"; tail -3 out.txt | sed "s/^/::notice::tail /"; exit $c
       - name: 讀出目前上線的規則
         if: inputs.mode != 'test'
         env:
