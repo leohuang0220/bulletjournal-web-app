@@ -1227,7 +1227,7 @@ function familyCard(){
 function famDiagHtml(){
   const g=S.famDiag||{}, fid=famRef?famRef.id.slice(0,6):'';
   const why=g.st==='wait'?'家人名單還在讀取中…':g.st==='err'?`家人名單讀取失敗（${esc(g.code||'')}）`:g.st==='missing'?'雲端找不到這本日記的主檔':`主檔讀到了，但裡面沒有家人名單（欄位 ${g.keys} 個${g.cache?'，手機暫存':''}）`;
-  return `<p class="hint warn" style="margin-top:0">${why}　代號 ${esc(fid)}</p><button class="btn2" data-act="famreload" style="margin-bottom:10px">重新讀取家人名單</button>`;
+  return `<p class="hint warn" style="margin-top:0">${why}　代號 ${esc(fid)}</p><button class="btn2" data-act="famreload" style="margin-bottom:10px">重新讀取家人名單</button>${g.st==='missing'?`<p class="hint" style="margin:4px 0 8px">記錄、寶寶資料都還在，只是存家人名單、Gemini 金鑰、LINE 綁定的主檔不見了。按下面的按鈕重建主檔，再把另一半的 Gmail 加回來。</p><button class="addbtn" data-act="famrebuild" style="margin:0 0 12px">重建日記主檔</button>`:''}`;
 }
 function viewSet(){
   return header(`<div class="datenav"><span></span><div class="d">設定</div><span></span></div>`)+
@@ -1958,6 +1958,14 @@ document.addEventListener('click',async e=>{
   switch(act){
     case 'dpstock': { const v=+grab('dp-stock'); if(!(v>=0)||grab('dp-stock')===''){toast('請填片數');return} await dpSaveMeta({stock:v,stockT:Date.now()}); toast('庫存已更新'); break }
     case 'dpai': runDiaperAI(); break;
+    case 'famrebuild': { if(!famRef||!me) break; a.disabled=true;
+      try{ const s=await famRef.get({source:'server'});
+        if(s.exists){ const d=s.data()||{}; S.fam=d; S.names=d.members||{}; S.famDiag={st:'ok'}; toast('主檔其實還在，已重新讀取'); render(); break }
+        const em=(me.email||'').toLowerCase();
+        await famRef.set({emails:[em],members:{[me.uid]:me.displayName||em},owner:me.uid,created:Date.now(),restoredAt:Date.now()});
+        toast('主檔已重建，請把另一半的 Gmail 加回來'); setTimeout(()=>{const i=document.getElementById('s-mem'); if(i) i.focus()},300);
+      }catch(e){ toast('重建失敗：'+(e.code||e.message)); a.disabled=false }
+      break }
     case 'famreload': { if(!famRef) break; try{ const s=await famRef.get({source:'server'}); const d=s.data()||{}; S.fam=d; S.names=d.members||{}; S.famDiag={st:s.exists?'ok':'missing',cache:false,keys:Object.keys(d).length,em:(d.emails||[]).length}; toast(s.exists?`讀到 ${(d.emails||[]).length} 位家人`:'雲端找不到主檔') }catch(e){ S.famDiag={st:'err',code:e.code||e.message}; toast('讀取失敗：'+(e.code||e.message)) } render(); break }
     case 'goday': S.day=+a.dataset.d; S.tab='log'; render(); window.scrollTo(0,0); break;
     case 'pushon': pushEnable(); break;
