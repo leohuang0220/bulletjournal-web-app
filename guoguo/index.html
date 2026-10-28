@@ -691,7 +691,8 @@ function attachFamily(ref,fromCache){
   const fsErr=e=>{console.warn(e); if(e&&e.code==='permission-denied'){toast('你已不在這本日記的成員名單中');}};
   S.famDiag={st:'wait'};
   subs.push(famRef.onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; saveCache(); const d=s.data()||{}; S.fam=d; S.famDiag={st:s.exists?'ok':'missing',cache:s.metadata.fromCache,keys:Object.keys(d).length,em:(d.emails||[]).length}; S.names=d.members||{};
-    if(me&&!(d.members||{})[me.uid]) famRef.update({['members.'+me.uid]:me.displayName||me.email}).catch(()=>{});
+    if(me&&s.exists&&!(d.members||{})[me.uid]) famRef.update({['members.'+me.uid]:me.displayName||me.email}).catch(()=>{});
+    if(s.exists&&!s.metadata.fromCache) famBackup(d);
     if(!document.querySelector('.scrim')) render() },e=>{ S.famDiag={st:'err',code:e&&(e.code||e.message)}; if(!document.querySelector('.scrim')) render(); if(fromCache&&e&&e.code==='permission-denied'){ ls('bl_cache',null); subs.forEach(f=>f()); subs=[]; famRef=null; S.mode=undefined; showGate('loading'); findFamily(); return } fsErr(e) }));
   subs.push(db.collection('logs').where('t','>=',since).orderBy('t','desc').limit(1000).onSnapshot(snap=>{
     S.logs = snap.docs.map(d=>({id:d.id,...d.data()})); S.ready=true; if(!snap.metadata.fromCache){S.logsLoaded=true; maybeOnboard()} render(); saveCache(); },fsErr));
@@ -1224,10 +1225,16 @@ function familyCard(){
    <p class="hint">對方用這個 Gmail 登入果果日記，就會看到同一本日記，兩支手機即時同步。</p>
    <button class="btn2" data-act="logout" style="margin-top:10px">登出 ${esc(me&&me.email||'')}</button></div>`;
 }
+function famBackup(d){ // 主檔有變動就備份一份到 meta/famBackup（主檔不見時可一鍵重建）
+  if(!(d.emails||[]).length) return;
+  const keep={emails:d.emails,members:d.members||{},owner:d.owner||null,geminiKey:d.geminiKey||null,lineUsers:d.lineUsers||{},geminiModel:d.geminiModel||null};
+  const j=JSON.stringify(keep); if(j===lsGet('gg_fambk_'+famRef.id)) return;
+  db.doc('meta/famBackup').set({...keep,t:Date.now(),by:S.uid||null}).then(()=>{try{localStorage.setItem('gg_fambk_'+famRef.id,j)}catch(_){}}).catch(()=>{});
+}
 function famDiagHtml(){
   const g=S.famDiag||{}, fid=famRef?famRef.id.slice(0,6):'';
   const why=g.st==='wait'?'家人名單還在讀取中…':g.st==='err'?`家人名單讀取失敗（${esc(g.code||'')}）`:g.st==='missing'?'雲端找不到這本日記的主檔':`主檔讀到了，但裡面沒有家人名單（欄位 ${g.keys} 個${g.cache?'，手機暫存':''}）`;
-  return `<p class="hint warn" style="margin-top:0">${why}　代號 ${esc(fid)}</p><button class="btn2" data-act="famreload" style="margin-bottom:10px">重新讀取家人名單</button>${g.st==='missing'?`<p class="hint" style="margin:4px 0 8px">記錄、寶寶資料都還在，只是存家人名單、Gemini 金鑰、LINE 綁定的主檔不見了。按下面的按鈕重建主檔，再把另一半的 Gmail 加回來。</p><button class="addbtn" data-act="famrebuild" style="margin:0 0 12px">重建日記主檔</button>`:''}`;
+  return `<p class="hint warn" style="margin-top:0">${why}　代號 ${esc(fid)}</p><button class="btn2" data-act="famreload" style="margin-bottom:10px">重新讀取家人名單</button>${g.st==='missing'?`<p class="hint" style="margin:4px 0 8px">記錄、寶寶資料都還在，只是存家人名單、Gemini 金鑰、LINE 綁定的主檔不見了。按下面的按鈕重建主檔；有備份的話，家人名單、Gemini 金鑰、LINE 綁定會一起補回來。</p><button class="addbtn" data-act="famrebuild" style="margin:0 0 12px">重建日記主檔</button>`:''}`;
 }
 function viewSet(){
   return header(`<div class="datenav"><span></span><div class="d">設定</div><span></span></div>`)+
@@ -1961,9 +1968,13 @@ document.addEventListener('click',async e=>{
     case 'famrebuild': { if(!famRef||!me) break; a.disabled=true;
       try{ const s=await famRef.get({source:'server'});
         if(s.exists){ const d=s.data()||{}; S.fam=d; S.names=d.members||{}; S.famDiag={st:'ok'}; toast('主檔其實還在，已重新讀取'); render(); break }
-        const em=(me.email||'').toLowerCase();
-        await famRef.set({emails:[em],members:{[me.uid]:me.displayName||em},owner:me.uid,created:Date.now(),restoredAt:Date.now()});
-        toast('主檔已重建，請把另一半的 Gmail 加回來'); setTimeout(()=>{const i=document.getElementById('s-mem'); if(i) i.focus()},300);
+        const em=(me.email||'').toLowerCase(); let bk=null;
+        try{ const b=await db.doc('meta/famBackup').get({source:'server'}); if(b.exists) bk=b.data() }catch(_){}
+        const doc=bk?{emails:[...new Set([...(bk.emails||[]),em])],members:{...(bk.members||{}),[me.uid]:me.displayName||em},owner:bk.owner||me.uid,lineUsers:bk.lineUsers||{},created:Date.now(),restoredAt:Date.now()}
+                    :{emails:[em],members:{[me.uid]:me.displayName||em},owner:me.uid,created:Date.now(),restoredAt:Date.now()};
+        if(bk&&bk.geminiKey) doc.geminiKey=bk.geminiKey; if(bk&&bk.geminiModel) doc.geminiModel=bk.geminiModel;
+        await famRef.set(doc);
+        toast(bk?`已從備份重建：${doc.emails.length} 位家人${bk.geminiKey?'、Gemini 金鑰':''}${Object.keys(doc.lineUsers).length?'、LINE 綁定':''}`:'主檔已重建，請把另一半的 Gmail 加回來'); setTimeout(()=>{const i=document.getElementById('s-mem'); if(i) i.focus()},300);
       }catch(e){ toast('重建失敗：'+(e.code||e.message)); a.disabled=false }
       break }
     case 'famreload': { if(!famRef) break; try{ const s=await famRef.get({source:'server'}); const d=s.data()||{}; S.fam=d; S.names=d.members||{}; S.famDiag={st:s.exists?'ok':'missing',cache:false,keys:Object.keys(d).length,em:(d.emails||[]).length}; toast(s.exists?`讀到 ${(d.emails||[]).length} 位家人`:'雲端找不到主檔') }catch(e){ S.famDiag={st:'err',code:e.code||e.message}; toast('讀取失敗：'+(e.code||e.message)) } render(); break }
