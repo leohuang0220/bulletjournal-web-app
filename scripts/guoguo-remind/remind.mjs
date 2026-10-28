@@ -111,6 +111,23 @@ async function pushSummary(f, name) {
 
 const today = twToday();
 const fams = await db.collection('families').get();
+
+// ── 主檔備份與檢查：把家人名單、LINE 綁定、Gemini 金鑰備份到 meta/famBackup；主檔不見時 App 可一鍵重建 ──
+// 結果用 ::notice:: 輸出（不含 email），可在 Actions 的 annotations 看到。
+async function famCheck() {
+  const refs = await db.collection('families').listDocuments();   // 連「主檔不見、只剩子資料」的也列得出來
+  console.log(`::notice::families listed=${refs.length} withDoc=${fams.size}`);
+  for (const ref of refs) {
+    const snap = await ref.get(), d = snap.data() || {};
+    const [logs, baby, bk, push] = await Promise.all([ref.collection('logs').limit(1).get(), ref.collection('meta').doc('baby').get(), ref.collection('meta').doc('famBackup').get(), ref.collection('meta').doc('push').get()]);
+    if (snap.exists && (d.emails || []).length) {
+      const keep = { emails: d.emails, members: d.members || {}, owner: d.owner || null, geminiKey: d.geminiKey || null, lineUsers: d.lineUsers || {}, geminiModel: d.geminiModel || null };
+      await ref.collection('meta').doc('famBackup').set({ ...keep, t: Date.now(), by: 'daily' });
+    }
+    console.log(`::notice::fam ${ref.id.slice(0, 6)} doc=${snap.exists} emails=${(d.emails || []).length} line=${Object.keys(d.lineUsers || {}).length} gemini=${!!d.geminiKey} logs=${!logs.empty} baby=${baby.exists} backup=${bk.exists} pushKey=${!!(push.exists && push.data().publicKey)}`);
+  }
+}
+try { await famCheck() } catch (e) { console.log('::warning::famCheck ' + e.message) }
 let lineParts = [];
 for (const f of fams.docs) {
   const fam = f.data();
