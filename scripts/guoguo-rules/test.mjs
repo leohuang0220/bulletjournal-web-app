@@ -1,0 +1,57 @@
+import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
+import fs from 'fs';
+const env = await initializeTestEnvironment({ projectId: 'demo-gg', firestore: { rules: fs.readFileSync('../../public/guoguo/firestore.rules','utf8'), host:'127.0.0.1', port:8085 } });
+const leo = env.authenticatedContext('uLeo', { email: 'leopupupu@gmail.com' }).firestore();
+const li  = env.authenticatedContext('uLi', { email: 'li810606@gmail.com' }).firestore();
+const gma = env.authenticatedContext('uGma', { email: 'grandma@gmail.com' }).firestore();
+const bad = env.authenticatedContext('uBad', { email: 'stranger@gmail.com' }).firestore();
+let pass=0, fail=0; const bads=[]; const t=async(name,p)=>{ try{ await p; pass++; console.log('ok  ',name) }catch(e){ fail++; bads.push(name); console.log('FAIL',name,'-',e.message.split('\n')[0]) } };
+const F='fam1';
+await env.withSecurityRulesDisabled(async c=>{ const db=c.firestore();
+  await setDoc(doc(db,'families',F),{emails:['leopupupu@gmail.com','li810606@gmail.com'],members:{uLeo:'Leo',uLi:'Li'},owner:'uLeo'});
+  await setDoc(doc(db,'families',F,'logs','a'),{t:1,type:'pee'}); });
+// 既有行為不能壞
+await t('Leo 讀主檔', assertSucceeds(getDoc(doc(leo,'families',F))));
+await t('Li 讀主檔', assertSucceeds(getDoc(doc(li,'families',F))));
+await t('Li 讀寫記錄', assertSucceeds(setDoc(doc(li,'families',F,'logs','b'),{t:2})));
+await t('Li 寫 meta/famBackup', assertSucceeds(setDoc(doc(li,'families',F,'meta','famBackup'),{x:1})));
+await t('Li 更新自己的 members 名字', assertSucceeds(updateDoc(doc(li,'families',F),{'members.uLi':'太太'})));
+await t('Li 改設定欄位(geminiKey)', assertSucceeds(updateDoc(doc(li,'families',F),{geminiKey:'k'})));
+await t('陌生人讀主檔 ✗', assertFails(getDoc(doc(bad,'families',F))));
+await t('陌生人讀記錄 ✗', assertFails(getDoc(doc(bad,'families',F,'logs','a'))));
+// 權限：只有管理者能管名單
+await t('Li 移除 Leo ✗', assertFails(updateDoc(doc(li,'families',F),{emails:arrayRemove('leopupupu@gmail.com')})));
+await t('Li 加人 ✗', assertFails(updateDoc(doc(li,'families',F),{emails:arrayUnion('x@gmail.com')})));
+await t('Li 改別人的 members ✗', assertFails(updateDoc(doc(li,'families',F),{'members.uLeo':'hack'})));
+await t('Li 把自己變管理者 ✗', assertFails(updateDoc(doc(li,'families',F),{owner:'uLi'})));
+await t('Li 刪主檔 ✗', assertFails(deleteDoc(doc(li,'families',F))));
+await t('Leo 用 email 加人', assertSucceeds(updateDoc(doc(leo,'families',F),{emails:arrayUnion('x@gmail.com')})));
+await t('Leo 移除人', assertSucceeds(updateDoc(doc(leo,'families',F),{emails:arrayRemove('x@gmail.com')})));
+await t('Leo 把自己移除 ✗', assertFails(updateDoc(doc(leo,'families',F),{emails:arrayRemove('leopupupu@gmail.com')})));
+// 邀請
+await t('Li 建邀請 ✗', assertFails(setDoc(doc(li,'invites','LIcode1234567890ab'),{fid:F,by:'uLi',exp:Date.now()+1e9})));
+await t('Leo 建邀請', assertSucceeds(setDoc(doc(leo,'invites','CODEabcdefghijkl1234'),{fid:F,by:'uLeo',exp:Date.now()+7*864e5,created:Date.now()})));
+await t('Leo 建短代碼 ✗', assertFails(setDoc(doc(leo,'invites','short'),{fid:F,by:'uLeo',exp:Date.now()+1e9})));
+await t('Leo 列出自己的邀請', assertSucceeds(getDocs(query(collection(leo,'invites'),where('by','==','uLeo')))));
+await t('奶奶讀邀請', assertSucceeds(getDoc(doc(gma,'invites','CODEabcdefghijkl1234'))));
+const join=(db,code,email,uid,extra={})=>updateDoc(doc(db,'families',F),{emails:arrayUnion(email),['members.'+uid]:'名字',['memberEmails.'+uid]:email,lastJoin:{code,uid,at:Date.now()},...extra});
+await t('奶奶用假代碼加入 ✗', assertFails(join(gma,'NOPEabcdefghijkl1234','grandma@gmail.com','uGma')));
+await t('奶奶加入時順便加別人 ✗', assertFails(updateDoc(doc(gma,'families',F),{emails:arrayUnion('grandma@gmail.com','evil@gmail.com'),lastJoin:{code:'CODEabcdefghijkl1234',uid:'uGma'}})));
+await t('奶奶加入時改 owner ✗', assertFails(join(gma,'CODEabcdefghijkl1234','grandma@gmail.com','uGma',{owner:'uGma'})));
+await t('奶奶用有效邀請加入', assertSucceeds(join(gma,'CODEabcdefghijkl1234','grandma@gmail.com','uGma')));
+await t('奶奶加入後讀記錄', assertSucceeds(getDoc(doc(gma,'families',F,'logs','a'))));
+await t('奶奶刪邀請 ✗', assertFails(deleteDoc(doc(gma,'invites','CODEabcdefghijkl1234'))));
+await t('奶奶自己退出', assertSucceeds(updateDoc(doc(gma,'families',F),{emails:arrayRemove('grandma@gmail.com')})));
+await t('奶奶退出後讀記錄 ✗', assertFails(getDoc(doc(gma,'families',F,'logs','a'))));
+await t('奶奶再用邀請加入', assertSucceeds(join(gma,'CODEabcdefghijkl1234','grandma@gmail.com','uGma')));
+await t('Leo 移除奶奶', assertSucceeds(updateDoc(doc(leo,'families',F),{emails:arrayRemove('grandma@gmail.com'),'members.uGma':null,'memberEmails.uGma':null})));
+await t('被移除後讀記錄 ✗', assertFails(getDoc(doc(gma,'families',F,'logs','a'))));
+await t('Leo 刪邀請', assertSucceeds(deleteDoc(doc(leo,'invites','CODEabcdefghijkl1234'))));
+await t('邀請刪除後再加入 ✗', assertFails(join(gma,'CODEabcdefghijkl1234','grandma@gmail.com','uGma')));
+await env.withSecurityRulesDisabled(async c=>{ await setDoc(doc(c.firestore(),'invites','OLDexpiredcode123456'),{fid:F,by:'uLeo',exp:Date.now()-1000}) });
+await t('過期邀請加入 ✗', assertFails(join(gma,'OLDexpiredcode123456','grandma@gmail.com','uGma')));
+// 建新日記／重建
+await t('新使用者建自己的日記', assertSucceeds(setDoc(doc(bad,'families','new1'),{emails:['stranger@gmail.com'],members:{uBad:'s'},owner:'uBad'})));
+await t('建日記時 owner 填別人 ✗', assertFails(setDoc(doc(bad,'families','new2'),{emails:['stranger@gmail.com'],owner:'uLeo'})));
+console.log(`\n${pass} passed, ${fail} failed`); console.log(`::notice::rules test ${pass} passed, ${fail} failed${bads.length?' — '+bads.slice(0,8).join(' / '):''}`); await env.cleanup(); process.exit(fail?1:0);

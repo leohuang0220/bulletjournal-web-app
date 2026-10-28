@@ -1,0 +1,2 @@
+{ "name": "guoguo-rules", "private": true, "type": "module",
+  "dependencies": { "firebase-tools": "13.35.1", "@firebase/rules-unit-testing": "3.0.4", "firebase": "10.14.1", "firebase-admin": "12.7.0" } }
