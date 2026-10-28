@@ -1,14 +1,65 @@
 rules_version = '2';
+// 果果日記 Firestore 規則
+//   families/{fid}            主檔 { emails:[], members:{uid:name}, memberEmails:{uid:email}, owner(管理者 uid), ... }
+//   families/{fid}/**         記錄、寶寶資料等（成員才能讀寫）
+//   invites/{code}            邀請連結 { fid, by, exp(毫秒), created }（只有管理者能建立／刪除）
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null && request.auth.token.email != null; }
     function myEmail() { return request.auth.token.email.lower(); }
+    function fam(fid) { return get(/databases/$(database)/documents/families/$(fid)).data; }
+    function isMember(fid) { return signedIn() && myEmail() in fam(fid).emails; }
+    function isOwner(fid) { return isMember(fid) && fam(fid).owner == request.auth.uid; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function membersOnlyMine() {
+      return !('members' in request.resource.data) ||
+        request.resource.data.members.diff(resource.data.get('members', {})).affectedKeys().hasOnly([request.auth.uid]);
+    }
+    function memberEmailsOnlyMine() {
+      return !('memberEmails' in request.resource.data) ||
+        request.resource.data.memberEmails.diff(resource.data.get('memberEmails', {})).affectedKeys().hasOnly([request.auth.uid]);
+    }
+
     match /families/{fid} {
-      allow create: if signedIn() && myEmail() in request.resource.data.emails;
-      allow read, update, delete: if signedIn() && myEmail() in resource.data.emails;
+      allow create: if signedIn() && myEmail() in request.resource.data.emails
+        && request.resource.data.owner == request.auth.uid;
+      allow read: if signedIn() && myEmail() in resource.data.emails;
+      allow delete: if signedIn() && myEmail() in resource.data.emails && resource.data.owner == request.auth.uid;
+      allow update: if signedIn() && (
+        // 管理者：什麼都能改（加人、移除、換設定），但不能把自己移出名單
+        (myEmail() in resource.data.emails && resource.data.owner == request.auth.uid
+          && myEmail() in request.resource.data.emails)
+        // 一般成員：不能動名單和管理者，名單上只能改自己那格
+        || (myEmail() in resource.data.emails
+          && !changed().hasAny(['emails', 'owner'])
+          && membersOnlyMine() && memberEmailsOnlyMine())
+        // 一般成員：自己退出
+        || (myEmail() in resource.data.emails && resource.data.owner != request.auth.uid
+          && changed().hasOnly(['emails', 'members', 'memberEmails'])
+          && request.resource.data.emails.toSet() == resource.data.emails.toSet().difference([myEmail()].toSet())
+          && membersOnlyMine() && memberEmailsOnlyMine())
+        // 用邀請連結加入：只能把自己加進名單，而且邀請碼要有效
+        || (!(myEmail() in resource.data.emails)
+          && changed().hasOnly(['emails', 'members', 'memberEmails', 'lastJoin'])
+          && request.resource.data.emails.toSet() == resource.data.emails.toSet().union([myEmail()].toSet())
+          && request.resource.data.lastJoin.uid == request.auth.uid
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.lastJoin.code))
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.lastJoin.code)).data.fid == fid
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.lastJoin.code)).data.exp > request.time.toMillis()
+          && membersOnlyMine() && memberEmailsOnlyMine())
+      );
       match /{col}/{doc} {
-        allow read, write: if signedIn() && myEmail() in get(/databases/$(database)/documents/families/$(fid)).data.emails;
+        allow read, write: if isMember(fid);
       }
+    }
+
+    match /invites/{code} {
+      allow get: if signedIn();                       // 拿到連結的人才知道代碼（隨機 20 字）
+      allow list: if signedIn() && resource.data.by == request.auth.uid;
+      allow create: if isOwner(request.resource.data.fid) && request.resource.data.by == request.auth.uid
+        && code.size() >= 16;
+      allow delete: if signedIn() && isOwner(resource.data.fid);
+      allow update: if false;
     }
   }
 }
