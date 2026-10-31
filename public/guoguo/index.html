@@ -564,7 +564,12 @@ const POOP_TEX = ['水狀','稀糊','軟糊','條狀','硬粒'];
 const AMOUNT = ['少','中','多'];
 const DP_WHY = ['沒尿（乾的）','出門前','洗澡前後','睡前','其他'];
 const DP_LEAK = ['漏尿','漏便','尿便都漏'];
-const DP_BRAND = ['奢寵幫','一級幫','滿意寶寶','其他'];
+const DP_BRAND = ['奢寵幫','一級幫','滿意寶寶','bzu','其他'];
+function brandList(cur0){ const base=DP_BRAND.filter(x=>x!=='其他'), out=[...base];
+  const add=b=>{ b=String(b||'').trim(); if(b&&b!=='其他'&&!out.includes(b)) out.push(b) };
+  (ls('bl_brands')||[]).forEach(add); (S.logs||[]).forEach(l=>{ if(l.brand) add(l.brand) }); add(cur0);
+  return out }
+function addBrand(v){ v=String(v||'').trim().slice(0,12); if(!v||v==='其他') return ''; const c=ls('bl_brands')||[]; if(!DP_BRAND.includes(v)&&!c.includes(v)){ c.push(v); ls('bl_brands',c) } return v }
 const AWAKE_MOOD=['安靜滿足','開心有笑','有點煩躁','哭鬧'], AWAKE_SELF=['可以自己玩','要人陪','要抱著'], AWAKE_TAG=['看黑白卡','排氣操','發呆','趴趴練習','說話唱歌','搖鈴玩具','照鏡子','撫觸按摩','外出散步'];
 const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
 const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
@@ -1736,10 +1741,10 @@ setInterval(()=>{ if(S.tab==='log' && !document.querySelector('.scrim')) render(
 /* ───────── sheet ───────── */
 let cur=null;
 function openSheet(type, rec){
-  cur={type, rec:rec?{...rec}:{type,t:Date.now()}};
+  cur={type, rec:rec?{...rec}:{type,t:Date.now()}, bn:'', brandOther:false};
   if(type==='sleep'&&!rec){ cur.rec.end=null }
   if(type==='poop'&&!rec){ cur.rec.withPee=true }
-  if(DPT(type)&&!rec){ const b=ls('bl_brand'); if(DP_BRAND.includes(b)) cur.rec.brand=b }
+  if(DPT(type)&&!rec){ const b=ls('bl_brand'); if(b&&brandList().includes(b)) cur.rec.brand=b }
   drawSheet();
 }
 function drawSheet(confirming){
@@ -1771,7 +1776,8 @@ function drawSheet(confirming){
   }
   if(DPT(type)){
     body+=`<div class="card"><span class="lbl">有漏出來嗎？（沒漏不用選）</span><div class="pills">${DP_LEAK.map(a=>`<button class="pill" style="--c:var(--c-temp)" data-pick="leak" data-v="${a}" aria-pressed="${rec.leak===a}">${a}</button>`).join('')}</div>
-      <span class="lbl" style="margin-top:12px">尿布品牌</span><div class="pills">${DP_BRAND.map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="brand" data-v="${a}" aria-pressed="${rec.brand===a}">${a}</button>`).join('')}</div></div>`;
+      <span class="lbl" style="margin-top:12px">尿布品牌</span><div class="pills">${brandList(rec.brand).map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="brand" data-v="${esc(a)}" aria-pressed="${rec.brand===a}">${esc(a)}</button>`).join('')}<button class="pill" style="--c:var(--c-diaper)" data-act="brandother" aria-pressed="${!!cur.brandOther}">其他＋</button></div>
+      ${cur.brandOther?`<div style="display:flex;gap:8px;margin-top:10px"><input id="f-brandnew" type="text" maxlength="12" placeholder="輸入品牌名稱" value="${esc(cur.bn||'')}" style="flex:1"><button class="pill" style="--c:var(--c-diaper)" data-act="brandadd">新增</button></div><p class="hint">新增後會變成選項，之後兩支手機都選得到</p>`:''}</div>`;
   }
   if(type==='diaper'){
     body+=`<div class="card"><span class="lbl">為什麼換（選填）</span><div class="pills">${DP_WHY.map(a=>`<button class="pill" style="--c:var(--c-diaper)" data-pick="why" data-v="${a}" aria-pressed="${rec.why===a}">${a}</button>`).join('')}</div></div>`+timeField('f-t','時間',rec.t);
@@ -1875,7 +1881,7 @@ async function uploadLogPhotos(e){
 document.addEventListener('change',e=>{ if(e.target&&e.target.id==='l-file') uploadLogPhotos(e) });
 async function dropAssets(ids){ if(assetsCap) for(const p of (ids||[])){ try{ await assetsCap.delete(p) }catch(e){} } }
 function grab(id){const el=document.getElementById(id);return el?el.value:''}
-function syncFields(){const r=cur.rec; const t=grab('f-t'); if(t) r.t=fromInput(t); const n=document.getElementById('f-note'); if(n) r.note=n.value;
+function syncFields(){const r=cur.rec; const bn=document.getElementById('f-brandnew'); if(bn) cur.bn=bn.value; const t=grab('f-t'); if(t) r.t=fromInput(t); const n=document.getElementById('f-note'); if(n) r.note=n.value;
   if(cur.type==='sleep'){const e=grab('f-end'); r.end=e?fromInput(e):null}
   if(cur.type==='solid'){r.food=grab('f-food').trim();r.qty=grab('f-qty').trim()}
   if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}
@@ -1894,6 +1900,7 @@ async function doSave(){
   if(type==='bmilk'||type==='formula'){out.ml=+document.getElementById('f-ml').textContent; ls('bl_last_'+type,out.ml); if(r.bgy) out.bgy=true}
   if(type==='pump'){out.ml=+document.getElementById('f-ml').textContent; if(!out.ml){toast('請填擠奶量');return} ls('bl_last_pump',out.ml)}
   if(DPT(type)){
+    if(cur.brandOther&&(cur.bn||'').trim()){ const v=addBrand(cur.bn); if(v) r.brand=v }
     if(r.leak) out.leak=r.leak; if(r.brand){ out.brand=r.brand; ls('bl_brand',r.brand) }
     const k=r.dp==null?1:+r.dp;
     if(type==='diaper'){ out.dp=k; if(r.why) out.why=r.why; if(!k){toast('至少 1 片');return} }
@@ -2007,6 +2014,8 @@ document.addEventListener('click',async e=>{
     case 'side': syncFields(); toggleSide(a.dataset.k); drawSheet(); renderTray(); break;
     case 'treset': resetTimer(); drawSheet(); renderTray(); break;
     case 'alarmtog': {const t=timer();t.alarmOn=!t.alarmOn;setTimer(t);a.setAttribute('aria-pressed',t.alarmOn);break}
+    case 'brandother': syncFields(); cur.brandOther=!cur.brandOther; drawSheet(); break;
+    case 'brandadd': { syncFields(); const v=addBrand(cur.bn); if(!v){toast('請輸入品牌名稱');break} cur.rec.brand=v; cur.brandOther=false; cur.bn=''; drawSheet(); break }
     case 'bgy': cur.rec.bgy=!cur.rec.bgy; a.setAttribute('aria-pressed',!!cur.rec.bgy); break;
     case 'withpee': cur.rec.withPee=!cur.rec.withPee; a.setAttribute('aria-pressed',cur.rec.withPee); break;
     case 'dp': { const el=document.getElementById('f-dp'); const v=Math.max(0,Math.min(6,+el.textContent+ +a.dataset.d)); el.textContent=v; cur.rec.dp=v; const h=document.getElementById('f-dph'); if(h) h.textContent=dpHint(cur.type,v); break }
