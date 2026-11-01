@@ -128,6 +128,16 @@ async function famCheck() {
   }
 }
 try { await famCheck() } catch (e) { console.log('::warning::famCheck ' + e.message) }
+// 診斷：目前雲端實際生效的 Firestore 規則，以及家人名單格式（不輸出 email 本身）
+try {
+  const rs0 = await admin.securityRules().getFirestoreRuleset();
+  const src = (rs0.source[0] || {}).content || '';
+  console.log(`::notice::rules created=${rs0.createTime} len=${src.length} ` + src.replace(/\s+/g, ' ').slice(0, 700));
+  for (const ref of await db.collection('families').listDocuments()) {
+    const em = ((await ref.get()).data() || {}).emails || [];
+    console.log(`::notice::emails n=${em.length} hasLeo=${em.includes('leopupupu@gmail.com')} hasWife=${em.includes('li810606@gmail.com')} nonNormal=${em.filter(x => x !== String(x).trim().toLowerCase()).length}`);
+  }
+} catch (e) { console.log('::warning::diag ' + e.message) }
 let lineParts = [];
 for (const f of fams.docs) {
   const fam = f.data();
