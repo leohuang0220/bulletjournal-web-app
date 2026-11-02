@@ -550,7 +550,7 @@ const TYPES = {
   awake:{n:'清醒玩耍',c:'--c-awake',ic:'awake'},
   bath:{n:'洗澡',c:'--c-bath',ic:'bath'},
   sick:{n:'不舒服',c:'--c-sick',ic:'sick'},
-  event:{n:'其他事件',c:'--c-event',ic:'event'},
+  event:{n:'事件',c:'--c-event',ic:'event'},
 };
 const ORDER = ['breast','bmilk','formula','pee','poop','diaper','sleep','pump','temp','awake','mood','bath','sick','solid','med','event'];
 const MILESTONES = ['回家囉','滿月','第一次洗澡','第一次笑','會抬頭','會翻身','長牙','會坐','會爬','叫爸爸媽媽','會站','第一步','收涎','抓周'];
@@ -574,7 +574,13 @@ const AWAKE_MOOD=['安靜滿足','開心有笑','有點煩躁','哭鬧'], AWAKE_
 const BATH_HOW=['盆浴','擦澡','只洗頭','游泳'], BATH_TAG=['洗頭','擦乳液','臍帶護理','剪指甲','洗完睡得好','哭鬧'];
 const SICK_TAG=['發燒','咳嗽','流鼻水','鼻塞','嘔吐','吐奶變多','腹瀉','便秘','疹子','尿布疹','眼屎多','哭鬧不止','食慾差','精神不好','脹氣','呼吸變快','黃疸','出牙不舒服','其他'];
 const SICK_SEV=['輕微','中等','嚴重'];
-const EVENT_TAG=['看醫生','打疫苗','健康檢查','日光浴','外出','按摩','拍照','訪客','旅行','其他'];
+const EV_GROUPS=[['可能影響睡眠',['陌生人來訪','訪客','外出','長途車程','打疫苗','看醫生','脹氣','吐奶','長牙','鼻塞','環境吵','太熱','太冷','洗澡晚','白天睡太多','白天睡太少','玩太興奮','換照顧者','換地方睡']],
+  ['睡眠狀況',['半夜不睡','夜哭','難入睡','睡很好']],['日常',['健康檢查','日光浴','按摩','拍照','旅行','其他']]];
+const EVENT_TAG=EV_GROUPS.flatMap(g=>g[1]);
+const EV_OUTCOME=['半夜不睡','夜哭','難入睡','睡很好'], EV_BAD=['半夜不睡','夜哭','難入睡'], EV_LVL=['輕微','明顯','很嚴重'];
+function evCustom(){ const out=[], add=t=>{t=String(t||'').trim(); if(t&&!EVENT_TAG.includes(t)&&!out.includes(t)) out.push(t)};
+  (ls('bl_evtags')||[]).forEach(add); (S.logs||[]).forEach(l=>{ if(l.type==='event') (l.what||[]).forEach(add) }); return out }
+function addEvTag(v){ v=String(v||'').trim().slice(0,12); if(!v) return ''; const c=ls('bl_evtags')||[]; if(!EVENT_TAG.includes(v)&&!c.includes(v)){c.push(v);ls('bl_evtags',c)} return v }
 const MOODS = ['開心','安穩','哭鬧','難安撫','吐奶','溢奶','打嗝','脹氣','紅屁屁','鼻塞','咳嗽','黃疸'];
 /* WHO 0–12 月（P3 / P50 / P97）近似值 */
 const WHO_F = {
@@ -644,7 +650,7 @@ async function initStore(){
     if(!window.firebase){ showGate('offline'); return }
   }
   if(!fbReady()){ // not configured yet: work on this device only
-    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.dpMeta = ls('bl_diaper')||{}; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
+    S.mode='local'; S.logs = ls('bl_logs')||[]; S.growth = ls('bl_growth')||[]; S.moments = ls('bl_moments')||[]; S.insights = ls('bl_insights')||[]; S.evHist = ls('bl_sleepev')||[]; S.dpMeta = ls('bl_diaper')||{}; S.baby = {...S.baby,...(ls('bl_baby')||{})}; S.care={ov:{},own:{},...(ls('bl_care')||{})}; moneyLocal(); window.cryAttach&&cryAttach(); setTimeout(()=>{syncReminderCache();notifyDue()},500); S.ready=true; S.babyLoaded=true;
     S.noCloud=true; maybeOnboard(); render(); return;
   }
   const c=ls('bl_cache');
@@ -707,6 +713,7 @@ function attachFamily(ref,fromCache){
   subs.push(db.doc('meta/remind').onSnapshot(s=>{ S.remind=s.exists?s.data():null; if(S.tab==='grow'&&S.careView==='care'&&!document.querySelector('.scrim')) render() },()=>{}));
   subs.push(db.doc('meta/care').onSnapshot(s=>{ S.care={ov:{},own:{},...(s.exists?s.data():{})}; syncReminderCache(); notifyDue(); if(!document.querySelector('.scrim')) render() },fsErr));
   subs.push(db.doc('meta/baby').onSnapshot(s=>{ if(!s.exists&&s.metadata.fromCache) return; /* 手機上還沒有資料時，等雲端回覆，不要當成新寶寶 */ if(s.exists) S.baby={...S.baby,...s.data()}; S.babyMissing=!s.exists; S.babyLoaded=true; saveCache(); maybeOnboard(); render() },e=>{fsErr(e);S.babyLoaded=true}));
+  subs.push(db.collection('sleepev').orderBy('t','desc').limit(60).onSnapshot(snap=>{S.evHist=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&S.sumMode==='evsleep'&&!document.querySelector('.scrim'))render()},()=>{}));
   subs.push(db.collection('insights').orderBy('t','desc').limit(30).onSnapshot(snap=>{S.insights=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.tab==='sum'&&!document.querySelector('.scrim'))render()},fsErr));
   moneyAttach(); window.cryAttach&&cryAttach();
   assetsCap={
@@ -989,7 +996,7 @@ function itemRow(l){
   if((l.type==='pee'||l.type==='poop')&&l.dp!=null){ if(+l.dp===0) meta.push('同一片尿布'); else if(+l.dp>1) meta.push(`用了 ${l.dp} 片`) }
   if(l.type==='bath'){v=[l.how,l.wt?l.wt+'°C':'',l.min?l.min+'分':''].filter(Boolean).join('・'); if(l.tags&&l.tags.length) meta.push(l.tags.join('、'))}
   if(l.type==='sick'){v=(l.tags||[]).join('、'); if(l.sev==='嚴重') flag='請留意'; else if(l.sev==='中等') flag='中等'; if(l.sev&&l.sev!=='嚴重'&&l.sev!=='中等') meta.push(l.sev)}
-  if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title].filter(Boolean).join('・')}
+  if(l.type==='event'){v=[l.what&&l.what.join('、'),l.title,l.lvl].filter(Boolean).join('・')}
   if(l.photos&&l.photos.length){ extra+=`<img class="lthumb" src="${photoSrc(l.photos[0])}" data-pid="${l.photos[0]}" alt="" loading="lazy">`; if(l.photos.length>1) meta.push(l.photos.length+'張照片') }
   if(l.note) meta.push(esc(l.note));
   const nm=l.by&&S.names[l.by]; if(nm) meta.push('by '+esc(nm.split(' ')[0])); else if(l.via) meta.push(esc(l.via));
@@ -1016,12 +1023,143 @@ function ribbon(list){
 /* ───────── view: summary ───────── */
 function viewSum(){
   const a=S.wk, b=a+7*DAY;
-  return header(`<div class="datenav"><span></span><div class="d">每週摘要<small>7 天統計</small></div><span></span></div>`)+
-   `<div class="wrap"><div class="wkhead"><button data-act="wprev" aria-label="前一週">${ic('left')}</button>
+  return header(`<div class="datenav"><span></span><div class="d">${S.sumMode==='evsleep'?'事件 × 睡眠<small>找出睡不好的原因</small>':'每週摘要<small>7 天統計</small>'}</div><span></span></div>`)+
+   `<div class="wrap">${S.sumMode==='evsleep'?'':`<div class="wkhead"><button data-act="wprev" aria-label="前一週">${ic('left')}</button>
     <div class="num">${dateShort(a)} ～ ${dateShort(b-DAY)}</div>
-    <button data-act="wnext" aria-label="後一週" ${b>Date.now()?'disabled':''}>${ic('right')}</button></div>
-    <div class="seg" role="group"><button data-sum="rhythm" aria-pressed="${S.sumMode==='rhythm'}">作息</button><button data-sum="ml" aria-pressed="${S.sumMode==='ml'}">奶量</button><button data-sum="pump" aria-pressed="${S.sumMode==='pump'}">擠奶</button><button data-sum="diaper" aria-pressed="${S.sumMode==='diaper'}">尿布</button><button data-sum="sleep" aria-pressed="${S.sumMode==='sleep'}">睡眠</button></div>
-    <div id="sumchart">${sumChart()}</div>${aiCard()}</div>`;
+    <button data-act="wnext" aria-label="後一週" ${b>Date.now()?'disabled':''}>${ic('right')}</button></div>`}
+    <div class="seg" role="group"><button data-sum="rhythm" aria-pressed="${S.sumMode==='rhythm'}">作息</button><button data-sum="ml" aria-pressed="${S.sumMode==='ml'}">奶量</button><button data-sum="pump" aria-pressed="${S.sumMode==='pump'}">擠奶</button><button data-sum="diaper" aria-pressed="${S.sumMode==='diaper'}">尿布</button><button data-sum="sleep" aria-pressed="${S.sumMode==='sleep'}">睡眠</button><button data-sum="evsleep" aria-pressed="${S.sumMode==='evsleep'}">事件</button></div>
+    ${S.sumMode==='evsleep'?evView():`<div id="sumchart">${sumChart()}</div>${aiCard()}`}</div>`;
+}
+/* ───────── 事件 × 睡眠 ─────────
+   一晚＝當天 19:00～隔天 07:00；當天的事件＝當天 06:00～隔天 07:00 之間記的事件／不舒服。
+   睡不好：手記「半夜不睡／夜哭／難入睡」，或最長連續睡眠低於這段期間中位數的 70%，或夜醒比中位數多 2 次以上（手記「睡很好」則算睡好）。 */
+const median=a=>{const b=a.slice().sort((x,y)=>x-y), n=b.length; return n?(n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2):0};
+function nightOf(d){
+  const a=d+19*36e5, b=d+DAY+7*36e5, now=Date.now();
+  const segs=S.logs.filter(l=>l.type==='sleep'&&l.t<b&&(l.end||now)>a).map(l=>[Math.max(l.t,a),Math.min(l.end||now,b)]).filter(x=>x[1]>x[0]).sort((x,y)=>x[0]-y[0]);
+  const m=[]; segs.forEach(x=>{const p=m[m.length-1]; if(p&&x[0]-p[1]<10*6e4) p[1]=Math.max(p[1],x[1]); else m.push([...x])});
+  const naps=S.logs.filter(l=>l.type==='sleep'&&l.end&&l.t<a&&l.end>d+7*36e5).reduce((s,l)=>s+Math.min(l.end,a)-Math.max(l.t,d+7*36e5),0);
+  const evs=S.logs.filter(l=>(l.type==='event'||l.type==='sick')&&l.t>=d+6*36e5&&l.t<b);
+  const fac=new Set(), out=new Set(), lvl={};
+  evs.forEach(l=>{ const tags=l.type==='event'?(l.what||[]):(l.tags||[]).filter(t=>t!=='其他');
+    tags.forEach(t=>{ (EV_OUTCOME.includes(t)?out:fac).add(t); if(l.lvl) lvl[t]=l.lvl }); if(l.type==='event'&&l.title&&!tags.length) fac.add(l.title) });
+  return {d, done:b<=now, rec:m.length>0, total:m.reduce((s,x)=>s+x[1]-x[0],0), longest:Math.max(0,...m.map(x=>x[1]-x[0])), wakes:Math.max(0,m.length-1),
+    bed:m.length?m[0][0]:null, naps:Math.max(0,naps), fac:[...fac], out:[...out], lvl};
+}
+function evNights(days){
+  const today=startOfDay(Date.now()), list=[];
+  for(let i=days;i>=1;i--) list.push(nightOf(today-i*DAY));
+  const ok=list.filter(n=>n.rec&&n.done), mL=median(ok.map(n=>n.longest)), mW=median(ok.map(n=>n.wakes));
+  list.forEach(n=>{ const why=[];
+    if(n.out.some(t=>EV_BAD.includes(t))) why.push('手記'+n.out.filter(t=>EV_BAD.includes(t)).join('、'));
+    if(ok.length>=4&&n.rec&&n.longest<mL*.7) why.push('最長連續偏短');
+    if(ok.length>=4&&n.rec&&n.wakes>=mW+2) why.push('夜醒偏多');
+    n.bad=!n.out.includes('睡很好')&&why.length>0; n.why=why });
+  return {list, ok, mL, mW};
+}
+function evTable(ok){
+  const avg=(arr,f)=>arr.length?arr.reduce((s,n)=>s+f(n),0)/arr.length:null;
+  const row=(name,arr)=>({name,n:arr.length,bad:arr.filter(n=>n.bad).length,longest:avg(arr,n=>n.longest),wakes:avg(arr,n=>n.wakes),total:avg(arr,n=>n.total),naps:avg(arr,n=>n.naps)});
+  const base=row('沒有事件的晚上',ok.filter(n=>!n.fac.length));
+  const names=[...new Set(ok.flatMap(n=>n.fac))];
+  const rows=names.map(f=>row(f,ok.filter(n=>n.fac.includes(f)))).sort((a,b)=>(b.bad/b.n)-(a.bad/a.n)||b.n-a.n);
+  return {base,rows};
+}
+const hr=ms=>ms==null?'—':durShort(ms), h1=ms=>ms==null?null:+(ms/36e5).toFixed(1);
+function evDelta(v,b,lowerBad){ if(v==null||b==null||!S) return ''; const d=v-b; if(Math.abs(d)<(lowerBad?6e5*3:0.5)) return ''; const worse=lowerBad?d<0:d>0;
+  return `<b style="color:${worse?'var(--warn)':'var(--ok)'}">${d>0?'＋':'－'}${lowerBad?durShort(Math.abs(d)):Math.abs(d).toFixed(1)}</b>` }
+function evRowHtml(r,base){
+  const pct=r.n?Math.round(r.bad/r.n*100):0;
+  return `<li style="padding:10px 0;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b>${esc(r.name)}</b><span class="hint" style="margin:0">${r.n} 晚${r.n<3?'・樣本少':''}</span></div>
+    <div style="font-size:13.5px;line-height:1.75;color:var(--ink-2,var(--ink))">睡不好 <b class="num" style="color:${pct>=50?'var(--warn)':'inherit'}">${r.bad}/${r.n}</b>（${pct}%）
+    ・最長連續 <span class="num">${hr(r.longest)}</span> ${base?evDelta(r.longest,base.longest,true):''}
+    ・夜醒 <span class="num">${r.wakes==null?'—':r.wakes.toFixed(1)}</span> 次 ${base?evDelta(r.wakes,base.wakes,false):''}
+    ・夜間共睡 <span class="num">${hr(r.total)}</span>・白天小睡 <span class="num">${hr(r.naps)}</span></div></li>`;
+}
+function evView(){
+  const days=S.evRange||14, {list,ok}=evNights(days), {base,rows}=evTable(ok);
+  const rng=[7,14,30,90].map(v=>`<button data-act="evrange" data-v="${v}" aria-pressed="${days===v}">${v} 天</button>`).join('');
+  const badN=ok.filter(n=>n.bad).length;
+  const nights=list.slice().reverse().map(n=>{const dd=new Date(n.d);
+    const tags=[...n.fac.map(t=>`<span class="chip" style="background:var(--band);border-radius:999px;padding:1px 8px;font-size:12px">${esc(t)}${n.lvl[t]?'・'+n.lvl[t]:''}</span>`),...n.out.map(t=>`<span class="chip" style="background:${EV_BAD.includes(t)?'var(--primary-soft)':'var(--band)'};border-radius:999px;padding:1px 8px;font-size:12px">${esc(t)}</span>`)].join(' ');
+    return `<li style="padding:9px 0;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b class="num">${dd.getMonth()+1}/${dd.getDate()} ${WK[dd.getDay()]} 晚</b>
+      <span style="font-size:12.5px;color:${n.bad?'var(--warn)':'var(--muted)'}">${!n.done?'還在夜間時段（07:00 後算完）':!n.rec?'沒有睡眠記錄':n.bad?'睡不好・'+n.why.join('、'):'正常'}</span></div>
+      ${n.rec?`<div class="num" style="font-size:13px;color:var(--muted)">入睡 ${n.bed?hm(n.bed):'—'}・共睡 ${hr(n.total)}・最長 ${hr(n.longest)}・夜醒 ${n.wakes} 次・白天小睡 ${hr(n.naps)}</div>`:''}
+      ${tags?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div>`:''}</li>`}).join('');
+  return `<div class="seg" role="group" style="margin-top:0">${rng}</div>
+   <div class="avg"><div><b class="num">${ok.length}</b><small>有記錄的晚上</small></div><div><b class="num" style="color:var(--warn)">${badN}</b><small>睡不好</small></div><div><b class="num">${hr(median(ok.map(n=>n.longest))||null)}</b><small>最長連續（中位數）</small></div></div>
+   <div class="sect"><h2>事件和睡眠的對照</h2><span>和沒事件的晚上比</span></div>
+   <div class="card">${!ok.length?'<p class="hint" style="margin:0">這段期間還沒有夜間睡眠記錄。記錄睡眠和事件幾天後，這裡會開始比對。</p>':`
+     <ul style="list-style:none;margin:0;padding:0">${evRowHtml(base)}${rows.map(r=>evRowHtml(r,base)).join('')||'<li class="hint" style="padding-top:10px">這段期間沒有記到事件。到「記錄 → 更多 → 事件」記下陌生人來訪、脹氣等。</li>'}</ul>
+     <p class="hint">綠色＝比沒事件的晚上好、紅色＝比較差。只有 1～2 晚的事件看不出規律，多記幾次才準。這是相關，不一定是原因。</p>`}</div>
+   ${evAiCard(days)}
+   <div class="sect"><h2>每晚明細</h2><button class="pill" data-act="evcsv" style="--c:var(--c-event)">匯出 CSV</button></div>
+   <div class="card"><ul style="list-style:none;margin:0;padding:0">${nights}</ul>
+   <p class="hint">一晚＝19:00～隔天 07:00；事件算當天 06:00 起記的。睡不好＝手記半夜不睡／夜哭／難入睡，或最長連續少於這段期間中位數的 7 成，或夜醒比中位數多 2 次以上。</p></div>`;
+}
+function evAiCard(days){
+  const list=S.evHist||[], box=(t,arr,c)=>arr&&arr.length?`<div style="margin-top:8px"><span class="lbl" style="color:${c}">${t}</span><ul style="margin:0;padding-left:18px;line-height:1.7;font-size:14px">${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+  const one=(x,open)=>{const r=x.r||{}, f=(r.findings||[]).map(z=>`${z.factor}：${z.effect}${z.confidence?'（把握'+z.confidence+'）':''}${z.evidence?'—'+z.evidence:''}`);
+    return `<p style="margin:6px 0 0;line-height:1.7;font-size:14.5px">${esc(r.summary||'')}</p>${box('各事件的影響',f,'var(--c-event)')}${box('還不確定、需要多觀察',r.unclear,'var(--c-formula)')}${box('可以試試',r.tryNext,'var(--primary-deep)')}${box('之後多記這些',r.recordMore,'var(--c-mood)')}${box('建議問醫師',r.doctor,'var(--warn)')}
+      ${x.rows?`<details style="margin-top:8px"${open?'':''}><summary style="font-size:13px;color:var(--muted);cursor:pointer">當時的統計數字</summary><ul style="list-style:none;margin:4px 0 0;padding:0">${x.base?evRowHtml(x.base):''}${x.rows.map(z=>evRowHtml(z,x.base)).join('')}</ul></details>`:''}`};
+  const when=t=>new Date(t).toLocaleString('zh-TW',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const latest=list[0], hist=list.slice(1).map(x=>`<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;font-size:13.5px"><span class="num" style="color:var(--muted)">${dateShort(x.t)}</span>　${esc(x.label||'')}　${esc(((x.r&&x.r.summary)||'').slice(0,40))}…</summary>${one(x)}</details>`).join('');
+  return `<div class="sect"><h2>AI 釐清睡眠問題</h2><span>每次分析都會存檔</span></div>
+   <div class="card"><button class="addbtn" style="margin-top:0" data-act="evai" ${S.evBusy?'disabled':''}>${ic('check')}${S.evBusy?'分析中…':`分析最近 ${days} 天的事件與睡眠`}</button>
+   ${latest?`<p class="hint">${when(latest.t)}・${esc(latest.label||'')}</p>${one(latest,true)}`:'<p class="hint">分析結果會存成紀錄，之後可以回來翻、和下一次比對。</p>'}
+   ${hist?`<details style="margin-top:12px"><summary style="font-size:13px;color:var(--muted);cursor:pointer">過去的分析（${list.length-1}）</summary><div style="margin-top:4px">${hist}</div></details>`:''}
+   <p class="hint">AI 只依記錄找規律，不能診斷。寶寶持續哭鬧不止、發燒、吐奶變多或精神變差，請直接就醫。</p></div>`;
+}
+async function runEvAI(){
+  const key=(S.fam&&S.fam.geminiKey)||ls('bl_gemini')||'';
+  if(!key){toast('請先到「設定」貼上 Gemini API 金鑰');S.tab='set';render();return}
+  const days=S.evRange||14, {ok,mL,mW}=evNights(days), {base,rows}=evTable(ok);
+  if(ok.length<3){toast('至少要有 3 晚的睡眠記錄才能分析');return}
+  S.evBusy=true; render();
+  const a=age(Date.now()), prev=(S.evHist||[])[0];
+  const data={baby:{ageText:a?a.txt:'未填生日',ageDays:a?a.day:null,sex:S.baby.sex||'未填',gestationWeeks:S.baby.ga,feeding:S.baby.feedMode||'未填'},
+    rule:'一晚=19:00~隔天07:00；事件=當天06:00起記的事件或不舒服',
+    medianLongestH:h1(mL), medianWakes:mW,
+    nights:ok.map(n=>({date:dateShort(n.d),events:n.fac.map(t=>n.lvl[t]?t+'('+n.lvl[t]+')':t),parentNoted:n.out,bedtime:n.bed?hm(n.bed):null,nightSleepH:h1(n.total),longestH:h1(n.longest),wakes:n.wakes,dayNapH:h1(n.naps),poorNight:n.bad,why:n.why})),
+    baseline:{...base,longest:h1(base.longest),total:h1(base.total),naps:h1(base.naps)},
+    byEvent:rows.map(r=>({...r,longest:h1(r.longest),total:h1(r.total),naps:h1(r.naps)})),
+    previous:prev?{date:dateShort(prev.t),summary:prev.r&&prev.r.summary,tryNext:prev.r&&prev.r.tryNext}:null};
+  const prompt=`你是溫暖、嚴謹的台灣兒科護理師兼嬰兒睡眠顧問。爸媽想釐清寶寶「睡不好」和當天發生的事件（例如陌生人來訪、脹氣、外出）有沒有關係。以下是逐晚資料與統計（JSON）。
+請用繁體中文、台灣用語回答，規則：
+- 逐一看 byEvent 每個事件，和 baseline（沒事件的晚上）比較最長連續睡眠、夜醒、睡不好比例，引用具體數字。
+- 樣本少於 3 晚的事件，confidence 一律給「低」，並說明要再觀察。
+- 分清楚「相關」和「原因」；同一晚有多個事件時要指出混在一起、無法分開。
+- 也看白天小睡、入睡時間和月齡發展（例如 4 個月睡眠倒退、長牙）是否是更好的解釋。
+- 若有 previous，說明上次建議試的事是否有改善。
+- 不診斷、不開藥；有警訊（持續哭鬧不止、發燒、嘔吐、呼吸異常）放進 doctor。
+只回覆一個 JSON：{"summary":"2-3句總結","findings":[{"factor":"事件名","effect":"讓睡眠變差／沒明顯影響／變好","evidence":"一句數據","confidence":"高／中／低"}],"unclear":["還不確定的地方"],"tryNext":["具體可以試的做法"],"recordMore":["之後要多記什麼才能釐清"],"doctor":[]}
+
+資料：
+${JSON.stringify(data)}`;
+  try{
+    const j=await gemCall(key,JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.3}}));
+    const txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+    const i=txt.indexOf('{'), k=txt.lastIndexOf('}'); const r=JSON.parse(i>=0&&k>i?txt.slice(i,k+1):txt);
+    if(!r||!r.summary) throw {code:'bad'};
+    const today=startOfDay(Date.now());
+    const rec={t:Date.now(), days, from:today-days*DAY, to:today, label:`${dateShort(today-days*DAY)}～${dateShort(today-DAY)}・${ok.length} 晚・睡不好 ${ok.filter(n=>n.bad).length}`,
+      base, rows:rows.slice(0,20),
+      r:{summary:String(r.summary),findings:(Array.isArray(r.findings)?r.findings:[]).slice(0,12).map(z=>({factor:String(z.factor||''),effect:String(z.effect||''),evidence:String(z.evidence||''),confidence:String(z.confidence||'')})),
+        unclear:arr(r.unclear),tryNext:arr(r.tryNext),recordMore:arr(r.recordMore),doctor:arr(r.doctor)}};
+    const clean=JSON.parse(JSON.stringify(rec));
+    if(S.mode==='db'){ try{await db.collection('sleepev').add({...clean,by:S.uid||null})}catch(e){S.evHist=[clean,...(S.evHist||[])];toast('雲端存檔失敗，這次結果只在這支手機')} }
+    else {S.evHist=[clean,...(S.evHist||[])]; ls('bl_sleepev',S.evHist)}
+  }catch(e){
+    if(e&&e.code==='busy') toast('Gemini 現在太多人用，請 1–2 分鐘後再試'); else if(e&&e.code==='rate_limited') toast('用得太頻繁，稍後再試'); else if(e&&e.code==='api') toast('Gemini 回覆錯誤：'+(e.message||'').slice(0,60)); else toast('分析失敗，請再試一次');
+  }
+  S.evBusy=false; render();
+}
+function evCSV(){
+  const days=S.evRange||14, {list}=evNights(days), q=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  const rows=[['日期','事件','睡眠狀況(手記)','影響程度','入睡時間','夜間共睡(小時)','最長連續(小時)','夜醒次數','白天小睡(小時)','睡不好','判斷依據']];
+  list.filter(n=>n.done).forEach(n=>{const dd=new Date(n.d); rows.push([`${dd.getFullYear()}/${dd.getMonth()+1}/${dd.getDate()}`,n.fac.join('、'),n.out.join('、'),Object.entries(n.lvl).map(([k,v])=>k+':'+v).join('、'),n.bed?hm(n.bed):'',n.rec?h1(n.total):'',n.rec?h1(n.longest):'',n.rec?n.wakes:'',h1(n.naps),!n.rec?'沒記錄':n.bad?'是':'否',n.why.join('、')])});
+  const csv='﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=`${S.baby.name||'寶寶'}-事件與睡眠-${toInput(Date.now()).slice(0,10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
 function dateShort(t){const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()}`}
 function rhythmChart(rng){
@@ -1741,7 +1879,7 @@ setInterval(()=>{ if(S.tab==='log' && !document.querySelector('.scrim')) render(
 /* ───────── sheet ───────── */
 let cur=null;
 function openSheet(type, rec){
-  cur={type, rec:rec?{...rec}:{type,t:Date.now()}, bn:'', brandOther:false};
+  cur={type, rec:rec?{...rec}:{type,t:Date.now()}, bn:'', brandOther:false, evn:'', evOther:false};
   if(type==='sleep'&&!rec){ cur.rec.end=null }
   if(type==='poop'&&!rec){ cur.rec.withPee=true }
   if(DPT(type)&&!rec){ const b=ls('bl_brand'); if(b&&brandList().includes(b)) cur.rec.brand=b }
@@ -1838,7 +1976,11 @@ function drawSheet(confirming){
   }
   if(type==='event'){
     const tags=rec.what||[];
-    body+=`<div class="card"><span class="lbl">發生了什麼（可複選）</span><div class="pills">${EVENT_TAG.map(m=>`<button class="pill" style="--c:var(--c-event)" data-what="${m}" aria-pressed="${tags.includes(m)}">${m}</button>`).join('')}</div>
+    const pill=m=>`<button class="pill" style="--c:var(--c-event)" data-what="${esc(m)}" aria-pressed="${tags.includes(m)}">${esc(m)}</button>`;
+    const groups=EV_GROUPS.map(([g,arr],i)=>`<span class="lbl" style="margin-top:${i?12:0}px">${g}</span><div class="pills">${arr.map(pill).join('')}${i===2?evCustom().map(pill).join('')+`<button class="pill" style="--c:var(--c-event)" data-act="evother" aria-pressed="${!!cur.evOther}">自訂＋</button>`:''}</div>`).join('');
+    body+=`<div class="card"><p class="hint" style="margin:0 0 10px">可複選。把可能的原因和「睡眠狀況」一起記，摘要的「事件」頁就能比對哪些事讓寶寶睡不好。</p>${groups}
+      ${cur.evOther?`<div style="display:flex;gap:8px;margin-top:10px"><input class="field" id="f-evnew" maxlength="12" placeholder="輸入事件，例如：阿嬤來帶" value="${esc(cur.evn||'')}" style="flex:1"><button class="pill" style="--c:var(--c-event)" data-act="evadd">新增</button></div><p class="hint">新增後會變成選項，兩支手機都看得到</p>`:''}
+      <span class="lbl" style="margin-top:12px">影響程度（選填）</span><div class="pills">${EV_LVL.map(a=>`<button class="pill" style="--c:var(--c-event)" data-pick="lvl" data-v="${a}" aria-pressed="${rec.lvl===a}">${a}</button>`).join('')}</div>
       <label class="lbl" for="f-title" style="margin-top:12px">簡短標題（選填）</label><input class="field" id="f-title" maxlength="40" value="${esc(rec.title||'')}" placeholder="例如：小兒科回診、第一次出門"></div>`+logPhotoBlock(rec)+timeField('f-t','時間',rec.t);
   }
   if(type==='med'){
@@ -1887,7 +2029,7 @@ function syncFields(){const r=cur.rec; const bn=document.getElementById('f-brand
   if(cur.type==='med'){r.drug=grab('f-drug').trim();r.dose=grab('f-dose').trim()}
   if(cur.type==='bath'){r.wt=grab('f-wt');r.min=grab('f-bmin')}
   if(cur.type==='awake'){r.min=grab('f-amin')}
-  if(cur.type==='event'){r.title=grab('f-title').trim()}}
+  if(cur.type==='event'){r.title=grab('f-title').trim(); const en=document.getElementById('f-evnew'); if(en) cur.evn=en.value}}
 async function doSave(){
   syncFields(); const r=cur.rec, type=cur.type;
   const out={type,t:r.t||Date.now()}; if(r.id) out.id=r.id; if(r.by) out.by=r.by; if(r.note) out.note=r.note.trim();
@@ -1922,7 +2064,7 @@ async function doSave(){
   if(type==='awake'){ if(r.calm)out.calm=r.calm; if(r.self)out.self=r.self; out.tags=r.tags||[]; if(+r.min)out.min=+r.min; if(!out.calm&&!out.self&&!out.tags.length&&!out.note&&!out.min){toast('請選一個狀態或做了什麼');return} }
   if(type==='bath'){ if(r.how)out.how=r.how; out.tags=r.tags||[]; if(+r.wt)out.wt=+r.wt; if(+r.min)out.min=+r.min }
   if(type==='sick'){out.tags=r.tags||[]; if(r.sev)out.sev=r.sev; if(!out.tags.length&&!out.note){toast('請選一個症狀或寫備註');return}}
-  if(type==='event'){out.what=r.what||[]; if(r.title)out.title=r.title; if(!out.what.length&&!out.title&&!out.note){toast('請選一項或寫標題');return}}
+  if(type==='event'){ if(cur.evOther&&(cur.evn||'').trim()){const v=addEvTag(cur.evn); if(v&&!(r.what||[]).includes(v)) r.what=[...(r.what||[]),v]} out.what=r.what||[]; if(r.lvl) out.lvl=r.lvl; if(r.title)out.title=r.title; if(!out.what.length&&!out.title&&!out.note){toast('請選一項或寫標題');return}}
   if(type==='mood'){out.tags=r.tags||[]; if(!out.tags.length&&!out.note){toast('請選一個狀態或寫備註');return}}
   if((type==='sick'||type==='event')&&(r.photos||[]).length) out.photos=r.photos;
   const ok=await saveLog(out); if(!ok) return;
@@ -2014,6 +2156,11 @@ document.addEventListener('click',async e=>{
     case 'side': syncFields(); toggleSide(a.dataset.k); drawSheet(); renderTray(); break;
     case 'treset': resetTimer(); drawSheet(); renderTray(); break;
     case 'alarmtog': {const t=timer();t.alarmOn=!t.alarmOn;setTimer(t);a.setAttribute('aria-pressed',t.alarmOn);break}
+    case 'evother': syncFields(); cur.evOther=!cur.evOther; drawSheet(); break;
+    case 'evadd': { syncFields(); const v=addEvTag(cur.evn); if(!v){toast('請輸入事件名稱');break} const w=new Set(cur.rec.what||[]); w.add(v); cur.rec.what=[...w]; cur.evOther=false; cur.evn=''; drawSheet(); break }
+    case 'evai': runEvAI(); break;
+    case 'evcsv': evCSV(); break;
+    case 'evrange': S.evRange=+a.dataset.v; render(); break;
     case 'brandother': syncFields(); cur.brandOther=!cur.brandOther; drawSheet(); break;
     case 'brandadd': { syncFields(); const v=addBrand(cur.bn); if(!v){toast('請輸入品牌名稱');break} cur.rec.brand=v; cur.brandOther=false; cur.bn=''; drawSheet(); break }
     case 'bgy': cur.rec.bgy=!cur.rec.bgy; a.setAttribute('aria-pressed',!!cur.rec.bgy); break;
