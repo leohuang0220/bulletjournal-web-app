@@ -835,7 +835,7 @@ async function shrinkRaw(file,max){
 
 /* ───────── what's next ───────── */
 function avgGap(types,hours){
-  const from=Date.now()-hours*36e5, ts=S.logs.filter(l=>types.includes(l.type)&&l.t>=from).map(l=>l.t).sort((a,b)=>a-b);
+  const from=Date.now()-hours*36e5, lim=Date.now()+10*6e4, ts=S.logs.filter(l=>types.includes(l.type)&&l.t>=from&&l.t<=lim).map(l=>l.t).sort((a,b)=>a-b);
   const gaps=[]; for(let i=1;i<ts.length;i++){const g=ts[i]-ts[i-1]; if(g>15*6e4&&g<8*36e5) gaps.push(g)}
   return gaps.length>=2?gaps.reduce((a,b)=>a+b,0)/gaps.length:null;
 }
@@ -844,14 +844,14 @@ function wakeWindow(){
   if(m<1) return [35,60]; if(m<3) return [60,90]; if(m<5) return [75,120]; if(m<7) return [120,150]; if(m<10) return [150,210]; return [180,240];
 }
 function predict(){
-  const out=[], now=Date.now();
-  const lf=S.logs.find(l=>FEEDS.includes(l.type));
+  const out=[], now=Date.now(), ok=l=>l.t<=now+10*6e4;
+  const lf=S.logs.find(l=>FEEDS.includes(l.type)&&ok(l));
   if(lf){const g=avgGap(FEEDS,48)||(+S.baby.interval||3)*36e5; out.push({type:'formula',label:'下一次餵奶',at:lf.t+g,from:lf.t,basis:avgGap(FEEDS,48)?'依近 48 小時平均間隔':'依設定的餵奶間隔'})}
-  const lp=S.logs.find(l=>l.type==='pump');
+  const lp=S.logs.find(l=>l.type==='pump'&&ok(l));
   if(lp){const pg=avgGap(['pump'],48); out.push({type:'pump',label:'下一次擠奶',at:lp.t+(pg||3*36e5),from:lp.t,basis:pg?'依近 48 小時平均間隔':'約每 3 小時一次'})}
   const sl=S.logs.find(l=>l.type==='sleep');
   if(sl&&!sl.end){out.push({type:'sleep',label:'寶寶正在睡',sleeping:true,from:sl.t})}
-  const ld=S.logs.find(l=>l.type==='pee'||l.type==='poop'||l.type==='diaper');
+  const ld=S.logs.find(l=>(l.type==='pee'||l.type==='poop'||l.type==='diaper')&&ok(l));
   if(ld){const g=avgGap(['pee','poop','diaper'],48)||2.5*36e5; out.push({type:'pee',label:'檢查尿布',at:ld.t+g,from:ld.t,basis:'依近 48 小時換尿布間隔'})}
   return out;
 }
@@ -957,7 +957,7 @@ function viewLog(){
       return `<div class="nx" style="--c:${cvar(p.type)}">${badge(p.type)}<div class="t">${p.label} · ${main}<small>${when}・${p.basis}</small>
         <div class="bar"><i style="left:${a}%;right:0"></i><em style="left:${pos}%"></em></div></div></div>`;
     }).join('');
-    const lastOf=(ts)=>S.logs.find(l=>ts.includes(l.type));
+    const lastOf=(ts)=>S.logs.find(l=>ts.includes(l.type)&&l.t<=now+10*6e4);
     const cards=[[FEEDS,'formula','餵奶',l=>l.type==='breast'?`母乳 左${Math.round((l.left||0)/60)} 右${Math.round((l.right||0)/60)}分`:`${TYPES[l.type].n} ${l.ml||0}ml`],
       [['pee','poop','diaper'],'poop','尿布',l=>TYPES[l.type].n],
       [['sleep'],'sleep','睡眠',l=>l.end?`睡了 ${dur(l.end-l.t)}`:'睡覺中'],
@@ -965,7 +965,9 @@ function viewLog(){
         const l=lastOf(ts); if(!l) return '';
         const ref=l.type==='sleep'&&l.end?l.end:l.t;
         return `<button class="lastc" data-act="edit" data-id="${l.id}" style="--c:${cvar(t)}">${badge(t)}<div><b class="num">${l.type==='sleep'&&!l.end?'睡覺中':rel(now-ref)+'前'}</b><small>${n} · ${esc(f(l))}</small></div></button>`}).join('');
-    sinceCard=`${nx?`<div class="next"><h3>接下來<small>依記錄推估，僅供參考</small></h3>${nx}</div>`:''}`;
+    const fut=S.logs.filter(l=>l.t>Date.now()+30*6e4).slice(-5);
+    const futCard=fut.length?`<div class="card" style="border:1.5px solid var(--warn);margin-bottom:12px"><b style="color:var(--warn)">有 ${fut.length} 筆記錄的時間在未來</b><p class="hint" style="margin:4px 0 8px">可能是選錯日期，會讓「接下來」算錯。點一下修正時間：</p>${fut.map(l=>{const d=new Date(l.t);return `<button class="pill" style="--c:var(--warn);margin:0 6px 6px 0" data-act="edit" data-id="${l.id}">${TYPES[l.type]?TYPES[l.type].n:l.type}・${d.getMonth()+1}/${d.getDate()} ${hm(l.t)}${l.ml?'・'+l.ml+'ml':''}</button>`}).join('')}</div>`:'';
+    sinceCard=futCard+`${nx?`<div class="next"><h3>接下來<small>依記錄推估，僅供參考</small></h3>${nx}</div>`:''}`;
   }
   if(isToday&&!S.readOnly){ sinceCard+=`<button class="cy-open" data-cy="open">${ic('baby')}<span><b>寶寶在哭？狀態辨識</b><small>勾選觀察到的樣子，依記錄推估最可能的原因</small></span></button>`;
   }
@@ -2032,6 +2034,7 @@ function syncFields(){const r=cur.rec; const bn=document.getElementById('f-brand
   if(cur.type==='event'){r.title=grab('f-title').trim(); const en=document.getElementById('f-evnew'); if(en) cur.evn=en.value}}
 async function doSave(){
   syncFields(); const r=cur.rec, type=cur.type;
+  if(r.t&&r.t>Date.now()+30*6e4){toast('時間比現在晚，請確認日期是否選錯');return}
   const out={type,t:r.t||Date.now()}; if(r.id) out.id=r.id; if(r.by) out.by=r.by; if(r.note) out.note=r.note.trim();
   if(type==='breast'){
     const lm=grab('f-lm'), rm=grab('f-rm');
