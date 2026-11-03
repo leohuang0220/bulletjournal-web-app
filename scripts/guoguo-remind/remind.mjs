@@ -137,6 +137,12 @@ try {
     const em = ((await ref.get()).data() || {}).emails || [];
     console.log(`::notice::emails n=${em.length} hasLeo=${em.includes('leopupupu@gmail.com')} hasWife=${em.includes('li810606@gmail.com')} nonNormal=${em.filter(x => x !== String(x).trim().toLowerCase()).length}`);
   }
+  // 時間在未來的紀錄（只輸出類型、時間、建立時間，不含內容）
+  for (const ref of await db.collection('families').listDocuments()) {
+    const fut = await ref.collection('logs').where('t', '>', Date.now() + 30 * 60e3).get();
+    fut.docs.forEach(d => { const x = d.data(); console.log(`::notice::future log ${d.id.slice(0, 6)} type=${x.type} t=${new Date(x.t).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })} ml=${x.ml ?? ''} created=${x.created ? new Date(x.created).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' }) : '?'}`) });
+    if (!fut.size) console.log('::notice::future log none');
+  }
 } catch (e) { console.log('::warning::diag ' + e.message) }
 let lineParts = [];
 for (const f of fams.docs) {
