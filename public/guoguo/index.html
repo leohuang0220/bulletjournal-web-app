@@ -578,6 +578,9 @@ const EV_GROUPS=[['可能影響睡眠',['陌生人來訪','訪客','外出','長
   ['睡眠狀況',['半夜不睡','夜哭','難入睡','睡很好']],['日常',['健康檢查','日光浴','按摩','拍照','旅行','其他']]];
 const EVENT_TAG=EV_GROUPS.flatMap(g=>g[1]);
 const EV_OUTCOME=['半夜不睡','夜哭','難入睡','睡很好'], EV_BAD=['半夜不睡','夜哭','難入睡'], EV_LVL=['輕微','明顯','很嚴重'];
+function medRecent(){ const out=[], seen=new Set(), now=Date.now()+10*6e4;
+  for(const l of S.logs){ if(l.type!=='med'||!l.drug||l.t>now) continue; const k=l.drug+'|'+(l.dose||''); if(seen.has(k)) continue; seen.add(k); out.push({drug:l.drug,dose:l.dose||''}); if(out.length>=6) break }
+  return out }
 function evCustom(){ const out=[], add=t=>{t=String(t||'').trim(); if(t&&!EVENT_TAG.includes(t)&&!out.includes(t)) out.push(t)};
   (ls('bl_evtags')||[]).forEach(add); (S.logs||[]).forEach(l=>{ if(l.type==='event') (l.what||[]).forEach(add) }); return out }
 function addEvTag(v){ v=String(v||'').trim().slice(0,12); if(!v) return ''; const c=ls('bl_evtags')||[]; if(!EVENT_TAG.includes(v)&&!c.includes(v)){c.push(v);ls('bl_evtags',c)} return v }
@@ -1884,6 +1887,7 @@ function openSheet(type, rec){
   cur={type, rec:rec?{...rec}:{type,t:Date.now()}, bn:'', brandOther:false, evn:'', evOther:false};
   if(type==='sleep'&&!rec){ cur.rec.end=null }
   if(type==='poop'&&!rec){ cur.rec.withPee=true }
+  if(type==='med'&&!rec){ const m=medRecent()[0]; if(m){cur.rec.drug=m.drug; if(m.dose) cur.rec.dose=m.dose} }
   if(DPT(type)&&!rec){ const b=ls('bl_brand'); if(b&&brandList().includes(b)) cur.rec.brand=b }
   drawSheet();
 }
@@ -1986,7 +1990,8 @@ function drawSheet(confirming){
       <label class="lbl" for="f-title" style="margin-top:12px">簡短標題（選填）</label><input class="field" id="f-title" maxlength="40" value="${esc(rec.title||'')}" placeholder="例如：小兒科回診、第一次出門"></div>`+logPhotoBlock(rec)+timeField('f-t','時間',rec.t);
   }
   if(type==='med'){
-    body+=`<div class="card"><label class="lbl" for="f-drug">藥名／保健品</label><input class="field" id="f-drug" value="${esc(rec.drug||'')}" placeholder="例如：維生素D滴劑" maxlength="40">
+    const mr=medRecent();
+    body+=`<div class="card">${mr.length?`<span class="lbl">最近用過（點一下帶入）</span><div class="pills" style="margin-bottom:12px">${mr.map((m,i)=>`<button class="pill" style="--c:var(--c-med)" data-act="medpick" data-i="${i}" aria-pressed="${rec.drug===m.drug&&(rec.dose||'')===(m.dose||'')}">${esc(m.drug)}${m.dose?'・'+esc(m.dose):''}</button>`).join('')}</div>`:''}<label class="lbl" for="f-drug">藥名／保健品</label><input class="field" id="f-drug" value="${esc(rec.drug||'')}" placeholder="例如：維生素D滴劑" maxlength="40">
       <label class="lbl" for="f-dose" style="margin-top:10px">劑量</label><input class="field" id="f-dose" value="${esc(rec.dose||'')}" placeholder="例如：1 滴、2.5 ml" maxlength="20">
       <p class="hint">依醫師或藥師指示的劑量與間隔使用。</p></div>`+timeField('f-t','時間',rec.t);
   }
@@ -2159,6 +2164,7 @@ document.addEventListener('click',async e=>{
     case 'side': syncFields(); toggleSide(a.dataset.k); drawSheet(); renderTray(); break;
     case 'treset': resetTimer(); drawSheet(); renderTray(); break;
     case 'alarmtog': {const t=timer();t.alarmOn=!t.alarmOn;setTimer(t);a.setAttribute('aria-pressed',t.alarmOn);break}
+    case 'medpick': { syncFields(); const m=medRecent()[+a.dataset.i]; if(m){cur.rec.drug=m.drug; cur.rec.dose=m.dose} drawSheet(); break }
     case 'evother': syncFields(); cur.evOther=!cur.evOther; drawSheet(); break;
     case 'evadd': { syncFields(); const v=addEvTag(cur.evn); if(!v){toast('請輸入事件名稱');break} const w=new Set(cur.rec.what||[]); w.add(v); cur.rec.what=[...w]; cur.evOther=false; cur.evn=''; drawSheet(); break }
     case 'evai': runEvAI(); break;
